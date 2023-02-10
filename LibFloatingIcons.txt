@@ -1,0 +1,9 @@
+## Title: LibFloatingIcons
+## APIVersion: 101036 101037
+## Version: Alpha 1
+## AddOnVersion: Alpha 1
+## Author: @|c00FF00ExoY|r94 (PC/EU)
+## IsLibrary: true
+## Description: Icons floating everywhere. 
+
+LibFloatingIcons.lua
