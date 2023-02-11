@@ -7,7 +7,9 @@ local wm = GetWindowManager()
 
 
 
-
+--[[ -- Variables -- ]]
+--[[ -- Constants -- ]]
+--[[ -- IconCache -- ]]
 
 local function OnUpdate() 
     
@@ -55,14 +57,19 @@ end
 
 
 local function Initialize() 
+    
+    -- register update (maybe on first player activation)
 
 end 
 
-local function OnAddonLoaded() 
+local function OnAddonLoaded(_, addonName) 
+    if addonName == libName then 
+        Initialize()
+        em:UnregisterForEvent(libName, EVENT_ADD_ON_LOADED)
 
 end
 
-
+em:RegisterForEvent(libName, EVENT_ADD_ON_LOADED, OnAddonLoaded)
 
 --[[ Ideas ]]
 
