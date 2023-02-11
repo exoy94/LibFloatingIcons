@@ -7,6 +7,94 @@ local wm = GetWindowManager()
 
 
 
+
+
+local function OnUpdate() 
+    
+    -- check 
+
+    -- early out, check if any icons need to be rendered
+
+    -- calculate camera inverse
+
+    -- screen dimensions
+    local uiW, uiH = GuiRoot:GetDimensions()
+
+    -- prepare render space
+    Set3DRenderSpaceToCurrentCamera( LFI.space:GetName() )
+
+    -- retrieve camera world position and orientation vectors
+    local cX, cY, cZ = GuiRender3DPositionToWorldPosition( LFI.space:Get3DRenderSpaceOrigin() )
+    local fX, fY, fZ = LFI.space:Get3DRenderSpaceForward()
+    local rX, rY, rZ = LFI.space:Get3DRenderSpaceRight()
+    local uX, uY, uZ = LFI.space:Get3DRenderSpaceUp()
+
+    -- calculate camera inverse matrix 
+    local i11 = -( uY * fZ - uZ * fY )
+    local i12 = -( rZ * fY - rY * fZ )
+    local i13 = -( rY * uZ - rZ * uY )
+    local i21 = -( uZ * fX - uX * fZ )
+    local i22 = -( rX * fZ - rZ * fX )
+    local i23 = -( rZ * uX - rX * uZ )
+    local i31 = -( uX * fY - uY * fX )
+    local i32 = -( rY * fX - rX * fY )
+    local i33 = -( rX * uY - rY * uX )
+    local i41 = -( uZ * fY * cX + uY * fX * cZ + uX * fZ * cY - uX * fY * cZ - uY * fZ * cX - uZ * fX * cY )
+    local i42 = -( rX * fY * cZ + rY * fZ * cX + rZ * fX * cY - rZ * fY * cX - rY * fX * cZ - rX * fZ * cY )
+    local i43 = -( rZ * uY * cX + rY * uX * cZ + rX * uZ * cY - rX * uY * cZ - rY * uZ * cX - rZ * uX * cY )
+
+
+
+
+end
+
+
+--[[ ---------------- ]]
+--[[ -- Initialize -- ]] 
+--[[ ---------------- ]]
+
+
+local function Initialize() 
+
+end 
+
+local function OnAddonLoaded() 
+
+end
+
+
+
+--[[ Ideas ]]
+
+icon_type:
+* mechanic
+    * remainAfterDead option (default off) 
+    * display name 
+    * callback 
+    * priority 
+* fallen 
+    * overwriteEverthingElse
+    * eigher way have it as a flag (and then check if person is actually dead)
+        or a callback when a player dies
+* identify 
+    * hodor icons or custom icons 
+* buffs (different name)
+ 
+-------
+set mechanic icon 
+HasMechanicIcon (t/f, prio, name)
+remove mechanic icon 
+
+------
+register position icon (callback, texture, position, zone)
+unregister position icon 
+
+--- 
+
+
+
+--[[ OLD ]]
+
 --[[ 1. Create Render Space ]]
 
 LFI.space = wm:CreateControl( "LFI_Space", GuiRoot, CT_CONTROL )
@@ -43,6 +131,68 @@ local i43 = -( rZ * uY * cX + rY * uX * cZ + rX * uZ * cY - rX * uY * cZ - rY * 
 
 -- screen dimensions
 local uiW, uiH = GuiRoot:GetDimensions()
+
+
+local function UpdateIcon() 
+    local zone, wX, wY, wZ  
+
+    wY = wY + offset*100 -- offset needed for position icons? 
+
+    -- calculate unit view position
+    local pX = wX * i11 + wY * i21 + wZ * i31 + i41
+    local pY = wX * i12 + wY * i22 + wZ * i32 + i42
+    local pZ = wX * i13 + wY * i23 + wZ * i33 + i43
+
+    --early out if icon is in back
+    if pz <= 0 then return end 
+
+    local w, h = GetWorldDimensionsOfViewFrustumAtDepth( pZ )
+    local x, y = pX * uiW / w, -pY * uiH / h
+
+    --update icon position 
+    --local ctrl = icon.ctrl
+    --SetAnchor( BOTTOM, OSI.win, CENTER, x, y )
+
+    --update icon data 
+
+    -- calculate distance
+    local dX, dY, dZ = wX - cX, wY - cY, wZ - cZ
+    local dist       = 1 + zo_sqrt( dX * dX + dY * dY + dZ * dZ )
+
+    -- update icon size
+    ctrl:SetDimensions( size, size )
+    ctrl:SetScale( scaling and 1000 / dist or 1 )
+
+    -- update icon opacity
+    local alpha = fadeout and zo_clampedPercentBetween( 1, fadedist * 100, dist ) or 1
+    ctrl:SetAlpha( basealpha * alpha * alpha )
+
+        -- FIXME: handle draw order
+    -- in theory, 2 icons could have the same floored pZ
+    -- zorder buffer should either store icons in tables or
+    -- decrease chance for same depth by multiplying pZ before
+    -- flooring for additional precision
+    zorder[1 + zo_floor( pZ * 100 )] = icon
+    ztotal = ztotal + 1
+end
+
+--TODO!!! DRAW ORDER 
+
+
+for k,v in ipairs( ListOfPositionIcons ) do
+
+end
+
+
+for i = 1, GROUP_SIZE_MAX do 
+    
+end
+
+
+for k,v in ipairs( allys/ companions ) do 
+
+end
+
 
 
 --[[ 3. Update Icons ]]
@@ -142,17 +292,3 @@ elseif DoesUnitExist( "companion" ) then
         end
     end
 end
-
---[[ ---------------- ]]
---[[ -- Initialize -- ]] 
---[[ ---------------- ]]
-
-
-local function Initialize() 
-
-end 
-
-local function OnAddonLoaded() 
-
-end
-
