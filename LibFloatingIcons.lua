@@ -6,17 +6,24 @@ local em = GetEventManager()
 local wm = GetWindowManager() 
 
 
+--[[ -- Constants -- ]]
+
 
 --[[ -- Variables -- ]]
---[[ -- Constants -- ]]
+
+local positionIconVault = {}
+local positionIcons = {}
+local currentZone = 0
+local RenderSpace 
+
 --[[ -- IconCache -- ]]
+
+
 
 local function OnUpdate() 
     
     -- check 
-
     -- early out, check if any icons need to be rendered
-
     -- calculate camera inverse
 
     -- screen dimensions
@@ -45,10 +52,64 @@ local function OnUpdate()
     local i42 = -( rX * fY * cZ + rY * fZ * cX + rZ * fX * cY - rZ * fY * cX - rY * fX * cZ - rX * fZ * cY )
     local i43 = -( rZ * uY * cX + rY * uX * cZ + rX * uZ * cY - rX * uY * cZ - rY * uZ * cX - rZ * uX * cY )
 
+end
 
 
+--[[ ------------ ]]
+--[[ -- Events -- ]]
+--[[ ------------ ]]
+
+-- update current zoneId 
+local function OnZoneIdChange() 
+    local newZoneId 
+    currentZone = newZoneId
+    if not positionIconVault[newZoneId] then return false end
+    positionIcons = ZO_ShallowCopy( positionIconVault[newZoneId] )
+end 
+
+
+--[[ ----------------------- ]]
+--[[ -- Exposed Functions -- ]]
+--[[ ----------------------- ]]
+
+function LFI.RegisterPositionIcon(zoneId, uniqueId, iconData) 
+    -- zone id (or map id?)
+    -- have iconInfo being a callback to allow for changing texture, size, position etc.
+    
+
+    if not positionIconVault[zoneId] then positionIconVault[zoneId] = {} end 
+
+    -- return false if identifier for this zoneId is already used 
+    if positionIconVault[zoneId][uniqueId] then return false end
+
+    positionIconVault[zoneId][uniqueId] = iconData 
+
+    if zoneId == currentId then 
+        -- Update list 
+    end
 
 end
+
+
+function LFI.UnregisterPositionIcon( zoneId, uniqueId )
+
+    if not positionIconVault[zoneId] then return false end 
+    if not positionIconVault[zoneId][uniqueId] then return false end 
+
+    positionIconVault[zoneId][uniqueId] = nil 
+
+    if zoneId == currentId then 
+        -- update current list 
+    end
+
+end
+
+--[[ ---------- ]]
+--[[ -- Menu -- ]]
+--[[ ---------- ]]
+
+-- Setting for Update Intervall 
+-- Setting for max Distance for Render 
 
 
 --[[ ---------------- ]]
@@ -60,13 +121,19 @@ local function Initialize()
     
     -- register update (maybe on first player activation)
 
+    -- create render space 
+    RenderSpace = wm:CreateControl( "LFI_Space", GuiRoot, CT_CONTROL )
+    RenderSpace:SetAnchorFill( GuiRoot )
+    RenderSpace:Create3DRenderSpace() 
+    RenderSpace:SetHidden( true ) 
+
 end 
 
 local function OnAddonLoaded(_, addonName) 
     if addonName == libName then 
         Initialize()
         em:UnregisterForEvent(libName, EVENT_ADD_ON_LOADED)
-
+    end
 end
 
 em:RegisterForEvent(libName, EVENT_ADD_ON_LOADED, OnAddonLoaded)
