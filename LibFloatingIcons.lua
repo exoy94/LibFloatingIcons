@@ -24,19 +24,18 @@ local function OnUpdate()
     
     -- check 
     -- early out, check if any icons need to be rendered
-    -- calculate camera inverse
 
     -- screen dimensions
     local uiW, uiH = GuiRoot:GetDimensions()
 
     -- prepare render space
-    Set3DRenderSpaceToCurrentCamera( LFI.space:GetName() )
+    Set3DRenderSpaceToCurrentCamera( RenderSpace:GetName() )
 
     -- retrieve camera world position and orientation vectors
-    local cX, cY, cZ = GuiRender3DPositionToWorldPosition( LFI.space:Get3DRenderSpaceOrigin() )
-    local fX, fY, fZ = LFI.space:Get3DRenderSpaceForward()
-    local rX, rY, rZ = LFI.space:Get3DRenderSpaceRight()
-    local uX, uY, uZ = LFI.space:Get3DRenderSpaceUp()
+    local cX, cY, cZ = GuiRender3DPositionToWorldPosition( RenderSpace:Get3DRenderSpaceOrigin() )
+    local fX, fY, fZ = RenderSpace:Get3DRenderSpaceForward()
+    local rX, rY, rZ = RenderSpace:Get3DRenderSpaceRight()
+    local uX, uY, uZ = RenderSpace:Get3DRenderSpaceUp()
 
     -- calculate camera inverse matrix 
     local i11 = -( uY * fZ - uZ * fY )
@@ -51,6 +50,57 @@ local function OnUpdate()
     local i41 = -( uZ * fY * cX + uY * fX * cZ + uX * fZ * cY - uX * fY * cZ - uY * fZ * cX - uZ * fX * cY )
     local i42 = -( rX * fY * cZ + rY * fZ * cX + rZ * fX * cY - rZ * fY * cX - rY * fX * cZ - rX * fZ * cY )
     local i43 = -( rZ * uY * cX + rY * uX * cZ + rX * uZ * cY - rX * uY * cZ - rY * uZ * cX - rZ * uX * cY )
+
+
+
+    local function CalculateIconScreenData(wX, wY, wZ)
+        
+        --[[ how to handle offset better]]
+
+        --[[ ody sv!
+            local tex       = nil
+            local hodor     = nil
+            local col       = OSI.BASECOLOR
+            local size      = OSI.GetOption( "iconsize" )
+            local offset    = OSI.GetOption( "offset" )
+            local scaling   = OSI.GetOption( "scaling" )
+            local fadeout   = OSI.GetOption( "fadeout" )
+            local fadedist  = OSI.GetOption( "fadedist" )
+            local basealpha = OSI.GetOption( "alpha" )
+            local dead      = OSI.GetOption( OSI.ROLE_DEAD )
+        ]]
+
+        local iconData = {}
+
+        wY = wY + 2*100 --offset
+
+        -- calculate unit view position
+        local pX = wX * i11 + wY * i21 + wZ * i31 + i41
+        local pY = wX * i12 + wY * i22 + wZ * i32 + i42
+        local pZ = wX * i13 + wY * i23 + wZ * i33 + i43
+        
+        -- early out if icon is behind camera
+        if pZ < 0 then return false end
+        iconData.pZ = pZ
+
+        -- calculate unit screen position
+        local w, h = GetWorldDimensionsOfViewFrustumAtDepth( pZ )
+        iconData.x, iconData.y = pX * uiW / w, -pY * uiH / h
+
+        -- calculate distance
+        local dX, dY, dZ = wX - cX, wY - cY, wZ - cZ
+        local dist       = 1 + zo_sqrt( dX * dX + dY * dY + dZ * dZ )
+
+        iconData.scale = scaling and 1000 / dist or 1
+
+        local alpha = fadeout and zo_clampedPercentBetween( 1, fadedist * 100, dist ) or 1
+        iconData.fade = basealpha * alpha * alpha  
+
+        return iconData
+    end
+
+  
+
 
 end
 
@@ -138,8 +188,10 @@ end
 
 em:RegisterForEvent(libName, EVENT_ADD_ON_LOADED, OnAddonLoaded)
 
---[[ Ideas ]]
 
+
+--[[ Ideas ]]
+--[[
 icon_type:
 * mechanic
     * remainAfterDead option (default off) 
@@ -163,206 +215,4 @@ remove mechanic icon
 register position icon (callback, texture, position, zone)
 unregister position icon 
 
---- 
-
-
-
---[[ OLD ]]
-
---[[ 1. Create Render Space ]]
-
-LFI.space = wm:CreateControl( "LFI_Space", GuiRoot, CT_CONTROL )
-LFI.space:SetAnchorFill( GuiRoot )
-LFI.space:Create3DRenderSpace() 
-LFI.space:SetHidden( true ) 
-
-
-
---[[ 2. Inverse Camera Matrix ]]
--- Currently at start of OnUpdate function 
-
--- prepare render space
-Set3DRenderSpaceToCurrentCamera( LFI.space:GetName() )
-
--- retrieve camera world position and orientation vectors
-local cX, cY, cZ = GuiRender3DPositionToWorldPosition( LFI.space:Get3DRenderSpaceOrigin() )
-local fX, fY, fZ = LFI.space:Get3DRenderSpaceForward()
-local rX, rY, rZ = LFI.space:Get3DRenderSpaceRight()
-local uX, uY, uZ = LFI.space:Get3DRenderSpaceUp()
-
-local i11 = -( uY * fZ - uZ * fY )
-local i12 = -( rZ * fY - rY * fZ )
-local i13 = -( rY * uZ - rZ * uY )
-local i21 = -( uZ * fX - uX * fZ )
-local i22 = -( rX * fZ - rZ * fX )
-local i23 = -( rZ * uX - rX * uZ )
-local i31 = -( uX * fY - uY * fX )
-local i32 = -( rY * fX - rX * fY )
-local i33 = -( rX * uY - rY * uX )
-local i41 = -( uZ * fY * cX + uY * fX * cZ + uX * fZ * cY - uX * fY * cZ - uY * fZ * cX - uZ * fX * cY )
-local i42 = -( rX * fY * cZ + rY * fZ * cX + rZ * fX * cY - rZ * fY * cX - rY * fX * cZ - rX * fZ * cY )
-local i43 = -( rZ * uY * cX + rY * uX * cZ + rX * uZ * cY - rX * uY * cZ - rY * uZ * cX - rZ * uX * cY )
-
--- screen dimensions
-local uiW, uiH = GuiRoot:GetDimensions()
-
-
-local function UpdateIcon() 
-    local zone, wX, wY, wZ  
-
-    wY = wY + offset*100 -- offset needed for position icons? 
-
-    -- calculate unit view position
-    local pX = wX * i11 + wY * i21 + wZ * i31 + i41
-    local pY = wX * i12 + wY * i22 + wZ * i32 + i42
-    local pZ = wX * i13 + wY * i23 + wZ * i33 + i43
-
-    --early out if icon is in back
-    if pz <= 0 then return end 
-
-    local w, h = GetWorldDimensionsOfViewFrustumAtDepth( pZ )
-    local x, y = pX * uiW / w, -pY * uiH / h
-
-    --update icon position 
-    --local ctrl = icon.ctrl
-    --SetAnchor( BOTTOM, OSI.win, CENTER, x, y )
-
-    --update icon data 
-
-    -- calculate distance
-    local dX, dY, dZ = wX - cX, wY - cY, wZ - cZ
-    local dist       = 1 + zo_sqrt( dX * dX + dY * dY + dZ * dZ )
-
-    -- update icon size
-    ctrl:SetDimensions( size, size )
-    ctrl:SetScale( scaling and 1000 / dist or 1 )
-
-    -- update icon opacity
-    local alpha = fadeout and zo_clampedPercentBetween( 1, fadedist * 100, dist ) or 1
-    ctrl:SetAlpha( basealpha * alpha * alpha )
-
-        -- FIXME: handle draw order
-    -- in theory, 2 icons could have the same floored pZ
-    -- zorder buffer should either store icons in tables or
-    -- decrease chance for same depth by multiplying pZ before
-    -- flooring for additional precision
-    zorder[1 + zo_floor( pZ * 100 )] = icon
-    ztotal = ztotal + 1
-end
-
---TODO!!! DRAW ORDER 
-
-
-for k,v in ipairs( ListOfPositionIcons ) do
-
-end
-
-
-for i = 1, GROUP_SIZE_MAX do 
-    
-end
-
-
-for k,v in ipairs( allys/ companions ) do 
-
-end
-
-
-
---[[ 3. Update Icons ]]
-
-local zone, wX, wY, wZ 
--- given for positions
--- determine for units by "GetUnitRawWorldPosition( unitTag)"
-
-wY = wY + offset * 100
-    
--- calculate unit view position
-local pX = wX * i11 + wY * i21 + wZ * i31 + i41
-local pY = wX * i12 + wY * i22 + wZ * i32 + i42
-local pZ = wX * i13 + wY * i23 + wZ * i33 + i43
-
--- if unit is in front
-if pZ > 0 then
-    -- calculate unit screen position
-    local w, h = GetWorldDimensionsOfViewFrustumAtDepth( pZ )
-    local x, y = pX * uiW / w, -pY * uiH / h
-
-    -- update icon position
-    local ctrl = icon.ctrl
-    ctrl:ClearAnchors()
-    ctrl:SetAnchor( BOTTOM, OSI.win, CENTER, x, y )
-
-    -- update icon data
-    OSI.UpdateIconData( icon, tex, col, hodor )
-
-    -- calculate distance
-    local dX, dY, dZ = wX - cX, wY - cY, wZ - cZ
-    local dist       = 1 + zo_sqrt( dX * dX + dY * dY + dZ * dZ )
-
-    -- update icon size
-    ctrl:SetDimensions( size, size )
-    ctrl:SetScale( scaling and 1000 / dist or 1 )
-
-    -- update icon opacity
-    local alpha = fadeout and zo_clampedPercentBetween( 1, fadedist * 100, dist ) or 1
-    ctrl:SetAlpha( basealpha * alpha * alpha )
-
-    -- show icon
-    ctrl:SetHidden( false )
-
-    -- FIXME: handle draw order
-    -- in theory, 2 icons could have the same floored pZ
-    -- zorder buffer should either store icons in tables or
-    -- decrease chance for same depth by multiplying pZ before
-    -- flooring for additional precision
-    zorder[1 + zo_floor( pZ * 100 )] = icon
-    ztotal = ztotal + 1
-end
-
-
---[[ 4. Handling of Allies etc. ]]
-
--- ally icons
-local ally = ALLIES[GetActiveCollectibleByType( COLLECTIBLE_CATEGORY_TYPE_ASSISTANT, GAMEPLAY_ACTOR_CATEGORY_PLAYER )]
-if ally then
-    for i = 1, MAX_PET_UNIT_TAGS do
-        local unit = "playerpet" .. i
-        if DoesUnitExist( unit ) and IsUnitFriendlyFollower( unit ) and (GetUnitCaption( unit )  or GetUnitName(unit) == "Giladil the Ragpicker") then
-            local data = OSI.GetOption( ally )
-            if data.show then
-                tex = data.icon
-                col = data.color
-
-                UpdateUnit( unit, OSI.GetIconForCompanion() )
-            end
-            break
-        end
-    end
-elseif DoesUnitExist( "companion" ) then
-    local did  = GetActiveCompanionDefId()
-    local cid  = GetCompanionCollectibleId( did )
-    local comp = cid and COMPANIONS[cid] or nil
-    local data = comp and OSI.GetOption( comp ) or nil
-    if data then
-        local show  = data.show
-        local color = nil
-
-        if show then
-            if IsUnitDead( "companion" ) then
-                offset = dead.offset
-
-                if data.dead then
-                    data  = dead
-                    color = IsUnitBeingResurrected( "companion" ) and data.colrez or data.color
-                    show  = true
-                end
-            end
-
-            tex = data.icon
-            col = color or data.color
-
-            UpdateUnit( "companion", OSI.GetIconForCompanion() )
-        end
-    end
-end
+--- ]]
