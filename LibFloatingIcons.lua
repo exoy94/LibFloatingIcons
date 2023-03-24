@@ -6,19 +6,28 @@ local em = GetEventManager()
 local wm = GetWindowManager() 
 
 
---[[ -- Constants -- ]]
+--[[ ------------- ]]
+--[[ -- Globals -- ]]
+--[[ ------------- ]]
+
+LFI_TYPE_IDENTIFY = 1
+LFI_TYPE_MECHANIC = 2 
+LFI_TYPE_
 
 
+--[[ --------------- ]]
 --[[ -- Variables -- ]]
+--[[ --------------- ]]
 
 local positionIconVault = {}
 local positionIcons = {}
 local currentZone = 0
 local RenderSpace 
 
+
+--[[ --------------- ]]
 --[[ -- IconCache -- ]]
-
-
+--[[ --------------- ]]
 
 local function OnUpdate() 
     
@@ -50,7 +59,6 @@ local function OnUpdate()
     local i41 = -( uZ * fY * cX + uY * fX * cZ + uX * fZ * cY - uX * fY * cZ - uY * fZ * cX - uZ * fX * cY )
     local i42 = -( rX * fY * cZ + rY * fZ * cX + rZ * fX * cY - rZ * fY * cX - rY * fX * cZ - rX * fZ * cY )
     local i43 = -( rZ * uY * cX + rY * uX * cZ + rX * uZ * cY - rX * uY * cZ - rY * uZ * cX - rZ * uX * cY )
-
 
 
     local function CalculateIconScreenData(wX, wY, wZ)
@@ -122,6 +130,24 @@ end
 --[[ -- Exposed Functions -- ]]
 --[[ ----------------------- ]]
 
+-- positionCallback for moving position icon 
+-- blinking 
+-- callback to updateIcon (for countdown etc) 
+-- mechanicIcon: 
+
+-- for unique icon: texture, callback for animation, 
+
+-- overwrite / return existing icons 
+
+function LFI.RegisterPlayerIcon(player, type, iconData)
+    
+end
+
+function LFT.UnregisterPlayerIcon(player, type)
+
+end
+
+
 function LFI.RegisterPositionIcon(zoneId, uniqueId, iconData) 
     -- zone id (or map id?)
     -- have iconInfo being a callback to allow for changing texture, size, position etc.
@@ -160,6 +186,8 @@ end
 
 -- Setting for Update Intervall 
 -- Setting for max Distance for Render 
+
+-- allow for animated unique icons
 
 
 --[[ ---------------- ]]
