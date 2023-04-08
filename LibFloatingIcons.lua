@@ -108,7 +108,12 @@ local function OnUpdate()
     end
 
   
-
+    for i = 1, GROUP_SIZE_MAX do 
+        local unit = "group"..i
+        local displayName = GetUnitDisplayName(unit) 
+        
+        
+    end
 
 end
 
@@ -187,7 +192,7 @@ end
 -- Setting for Update Intervall 
 -- Setting for max Distance for Render 
 
--- allow for animated unique icons
+-- allow for animated unique icons --> understand animations --> 
 
 
 --[[ ---------------- ]]
