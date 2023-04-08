@@ -12,7 +12,7 @@ local wm = GetWindowManager()
 
 LFI_TYPE_IDENTIFY = 1
 LFI_TYPE_MECHANIC = 2 
-LFI_TYPE_
+--LFI_TYPE_
 
 
 --[[ --------------- ]]
@@ -148,7 +148,7 @@ function LFI.RegisterPlayerIcon(player, type, iconData)
     
 end
 
-function LFT.UnregisterPlayerIcon(player, type)
+function LFI.UnregisterPlayerIcon(player, type)
 
 end
 
