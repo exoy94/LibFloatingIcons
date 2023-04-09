@@ -24,10 +24,11 @@ LFI_TYPE_MECHANIC = 2
 local SV = {}
 local defaultSV = {
     ["interval"] = 100,
-    ['fadeout'] = true,
-    ['fadedist'] = 1,
-    ['scaling'] = true, 
-    ['alpha'] = 1,
+    ["fadeout"] = true,
+    ["fadedist"] = 1,
+    ["scaling"] = true, 
+    ["alpha"] = 1,
+    ["maxSize"] = 5,
 }
 
 --[[ --------------- ]]
@@ -53,7 +54,6 @@ local playerIconList = {}
 --[[ -------------- ]]
 
 local function OnUpdate() 
-    
     -- check 
     -- early out, check if any icons need to be rendered
 
@@ -216,7 +216,7 @@ end
 --[[ -- Menu -- ]]
 --[[ ---------- ]]
 
-local function DefineSetting(setting, name, var, param)
+local function DefineSetting(setting, name, var, param, warning)
     local s = {}
         s.type = setting
         s.name = name 
@@ -228,10 +228,12 @@ local function DefineSetting(setting, name, var, param)
             s.step = param[3]
             s.decimals = 2
         end
+        if warning then 
+            s.warning = "Changes require Reloadui"
+        end
     return s
 end
 
--- Setting for Update Intervall 
 local function DefineMenu() 
     local LAM2 = LibAddonMenu2
 
@@ -248,8 +250,9 @@ local function DefineMenu()
     --TODO add describtions and maybe support for multiple languages? 
     table.insert(optionsTable, Lib.FeedbackSubmenu(idLFI, "info3599-LibFloatingIcons.html"))
     table.insert(optionsTable, {type="header", name="Performance"})
-    table.insert(optionsTable, DefineSetting("slider", "Update Interval", SV.interval, {0,100,10}))
+    table.insert(optionsTable, DefineSetting("slider", "Update Interval", SV.interval, {0,100,10}, true))
     table.insert(optionsTable, {type = "header", name="Visual"})
+    table.insert(optionsTable, DefineSetting("slider", "Maximum Size", SV.maxSize, {1,10,1}))
     table.insert(optionsTable, DefineSetting("checkbox", "Fadeout", SV.fadeout))
     table.insert(optionsTable, DefineSetting("checkbox", "Distance Scaling", SV.scaling))
     table.insert(optionsTable, DefineSetting("slider", "Fade Distance", SV.fadedist, {0,1,0.1}))
@@ -267,14 +270,17 @@ end
 --[[ ---------------- ]]
 --[[ -- Initialize -- ]] 
 --[[ ---------------- ]]
-
+local function OnPlayerActivated() 
+    EM:UnregisterForEvent(idLFI, EVENT_PLAYER_ACTIVATED)
+    EM:RegisterForUpdate(idLFI, SV.interval, OnUpdate)
+end
 
 local function Initialize() 
     
     -- load SavedVariables 
     SV = ZO_SavedVars:NewAccountWide('LFI_SV', 1, nil, defaultSV, 'Settings')
 
-
+    EM:RegisterForEvent(idLFI, EVENT_PLAYER_ACTIVATED, OnPlayerActivated)
     -- register update (maybe on first player activation)
 
     -- create render space 
