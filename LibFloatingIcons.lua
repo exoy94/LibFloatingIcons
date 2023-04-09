@@ -1,10 +1,11 @@
 LibFloatingIcons = LibFloatingIcons or {}
 
+
 local LFI = LibFloatingIcons
-
+local Lib = LibExoYsUtilities
 local em = GetEventManager() 
-local wm = GetWindowManager() 
-
+local wm = GetWindowManager()
+ 
 
 --[[ ------------- ]]
 --[[ -- Globals -- ]]
@@ -15,19 +16,41 @@ LFI_TYPE_MECHANIC = 2
 --LFI_TYPE_
 
 
+
+--[[ --------------------- ]]
+--[[ -- Saved Variables -- ]]
+--[[ --------------------- ]]
+
+local SV = {}
+local defaultSV = {
+    ["interval"] = 100,
+    ['fadeout'] = true,
+    ['fadedist'] = 1,
+    ['scaling'] = true, 
+    ['alpha'] = 1,
+}
+
 --[[ --------------- ]]
 --[[ -- Variables -- ]]
 --[[ --------------- ]]
 
+local idLFI = "LibFloatingIcons"
+local vLFI = 0
 local positionIconVault = {}
 local positionIcons = {}
 local currentZone = 0
 local RenderSpace 
 
-
 --[[ --------------- ]]
 --[[ -- IconCache -- ]]
 --[[ --------------- ]]
+
+local playerIconList = {}
+
+
+--[[ -------------- ]]
+--[[ -- Internal -- ]]
+--[[ -------------- ]]
 
 local function OnUpdate() 
     
@@ -62,7 +85,7 @@ local function OnUpdate()
 
 
     local function CalculateIconScreenData(wX, wY, wZ)
-        
+
         --[[ how to handle offset better]]
 
         --[[ ody sv!
@@ -71,12 +94,9 @@ local function OnUpdate()
             local col       = OSI.BASECOLOR
             local size      = OSI.GetOption( "iconsize" )
             local offset    = OSI.GetOption( "offset" )
-            local scaling   = OSI.GetOption( "scaling" )
-            local fadeout   = OSI.GetOption( "fadeout" )
-            local fadedist  = OSI.GetOption( "fadedist" )
-            local basealpha = OSI.GetOption( "alpha" )
             local dead      = OSI.GetOption( OSI.ROLE_DEAD )
         ]]
+
 
         local iconData = {}
 
@@ -99,20 +119,25 @@ local function OnUpdate()
         local dX, dY, dZ = wX - cX, wY - cY, wZ - cZ
         local dist       = 1 + zo_sqrt( dX * dX + dY * dY + dZ * dZ )
 
-        iconData.scale = scaling and 1000 / dist or 1
+        iconData.scale = SV.scaling and 1000 / dist or 1
 
-        local alpha = fadeout and zo_clampedPercentBetween( 1, fadedist * 100, dist ) or 1
-        iconData.fade = basealpha * alpha * alpha  
+        local alpha = SV.fadeout and zo_clampedPercentBetween( 1, SV.fadedist * 100, dist ) or 1
+        iconData.fade = SV.alpha * alpha * alpha  
 
         return iconData
     end
 
-  
+
+
+    local renderCache = {}
+
     for i = 1, GROUP_SIZE_MAX do 
         local unit = "group"..i
         local displayName = GetUnitDisplayName(unit) 
         
-        
+        if playerIconList[displayName] then 
+
+        end        
     end
 
 end
@@ -144,9 +169,11 @@ end
 
 -- overwrite / return existing icons 
 
+
 function LFI.RegisterPlayerIcon(player, type, iconData)
-    
+    playerIconList[player] = true 
 end
+
 
 function LFI.UnregisterPlayerIcon(player, type)
 
@@ -189,7 +216,47 @@ end
 --[[ -- Menu -- ]]
 --[[ ---------- ]]
 
+local function DefineSetting(setting, name, var, param)
+    local s = {}
+        s.type = setting
+        s.name = name 
+        s.getFunc = function() return var end
+        s.setFunc = function(v) var = v end 
+        if setting == "slider" then  
+            s.min = param[1] 
+            s.max = param[2] 
+            s.step = param[3]
+            s.decimals = 2
+        end
+    return s
+end
+
 -- Setting for Update Intervall 
+local function DefineMenu() 
+    local LAM2 = LibAddonMenu2
+
+    local panelData = {
+        type='panel', 
+        name=idLFI, 
+        displayName=idLFI, 
+        author = "@|c00FF00ExoY|r94 (PC/EU)", 
+        version = vLFI, 
+        registerForRefresh = true, 
+    }
+    local optionsTable = {} 
+
+    table.insert(optionsTable, Lib.FeedbackSubmenu(idLFI, "info3599-LibFloatingIcons.html"))
+    table.insert(optionsTable, DefineSetting("slider", "interval", SV.interval, {0,100,10}))
+    table.insert(optionsTable, {type = "divider"})
+    table.insert(optionsTable, DefineSetting("checkbox", "fadeout", SV.fadeout))
+    table.insert(optionsTable, DefineSetting("checkbox", "scaling", SV.scaling))
+    table.insert(optionsTable, DefineSetting("slider", "fadedist", SV.fadedist, {0,1,0.1}))
+    table.insert(optionsTable, DefineSetting("slider", "alpha", SV.alpha, {0,1,0.1}))
+
+    LAM2:RegisterAddonPanel('LFI_Menu', panelData)
+    LAM2:RegisterOptionControls('LFI_Menu', optionsTable)
+end 
+
 -- Setting for max Distance for Render 
 
 -- allow for animated unique icons --> understand animations --> 
@@ -202,24 +269,30 @@ end
 
 local function Initialize() 
     
+    -- load SavedVariables 
+    SV = ZO_SavedVars:NewAccountWide('LFI_SV', 1, nil, defaultSV, 'Settings')
+
+
     -- register update (maybe on first player activation)
 
     -- create render space 
-    RenderSpace = wm:CreateControl( "LFI_Space", GuiRoot, CT_CONTROL )
+    RenderSpace = wm:CreateControl( 'LFI_Space', GuiRoot, CT_CONTROL )
     RenderSpace:SetAnchorFill( GuiRoot )
     RenderSpace:Create3DRenderSpace() 
     RenderSpace:SetHidden( true ) 
 
+    DefineMenu()
+
 end 
 
 local function OnAddonLoaded(_, addonName) 
-    if addonName == libName then 
+    if addonName == idLFI then 
         Initialize()
-        em:UnregisterForEvent(libName, EVENT_ADD_ON_LOADED)
+        em:UnregisterForEvent(idLFI, EVENT_ADD_ON_LOADED)
     end
 end
 
-em:RegisterForEvent(libName, EVENT_ADD_ON_LOADED, OnAddonLoaded)
+em:RegisterForEvent(idLFI, EVENT_ADD_ON_LOADED, OnAddonLoaded)
 
 
 
