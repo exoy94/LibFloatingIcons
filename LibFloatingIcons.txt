@@ -5,5 +5,9 @@
 ## Author: @|c00FF00ExoY|r94 (PC/EU)
 ## IsLibrary: true
 ## Description: Icons floating everywhere. 
+## SavedVariables: LFI_SV
+
+## DependsOn: LibAddonMenu-2.0>=30
+## DependsOn: LibExoYsUtilities
 
 LibFloatingIcons.lua
