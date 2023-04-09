@@ -37,29 +37,55 @@ local defaultSV = {
 
 local idLFI = "LibFloatingIcons"
 local vLFI = 0
-local positionIconVault = {}
-local positionIcons = {}
+
+
 local currentZone = 0
+
+local icons = {}
+local playerIcons = {}
+local playerIconVault
+local positionIcons = {}
+local positionIconVault = {}
+
+local iconCache = {}
+
+--[[ ------------------ ]]
+--[[ -- Icon Handler -- ]]
+--[[ ------------------ ]]
+
 local RenderSpace 
+local Window 
+local iconPool = {}
 
---[[ --------------- ]]
---[[ -- IconCache -- ]]
---[[ --------------- ]]
+local function CreateIcon() 
+    local icon = WM:CreateControl( name, Window, CT_TEXTURE)
+    icon:ClearAnchors()
+    icon:SetAnchor( BOTTOM, OSI.win, CENTER, 0, 0 )
+    icon:SetHidden(true)
+    return {
+        ["ctrl"] = icon, 
+    }
+end 
 
-local playerIconList = {}
+local function GrapIcon() 
 
+end
 
---[[ -------------- ]]
---[[ -- Internal -- ]]
---[[ -------------- ]]
+local function ReleaseIcon() 
 
-local function OnUpdate() 
-    -- check 
+end
+
+--[[ ------------ ]]
+--[[ -- Update -- ]]
+--[[ ------------ ]]
+
+local function OnUpdate()   
+
     -- early out, check if any icons need to be rendered
 
+    local t = GetGameTimeMilliseconds() 
     -- screen dimensions
     local uiW, uiH = GuiRoot:GetDimensions()
-
     -- prepare render space
     Set3DRenderSpaceToCurrentCamera( RenderSpace:GetName() )
 
@@ -83,24 +109,22 @@ local function OnUpdate()
     local i42 = -( rX * fY * cZ + rY * fZ * cX + rZ * fX * cY - rZ * fY * cX - rY * fX * cZ - rX * fZ * cY )
     local i43 = -( rZ * uY * cX + rY * uX * cZ + rX * uZ * cY - rX * uY * cZ - rY * uZ * cX - rZ * uX * cY )
 
+    local function GetPosition(pos) 
+        local x,y,z 
+        if Lib.IsString(pos) then  ~, x,y,z = GetUnitWorldPosition(pos) end
+        if Lib.IsTable(pos) then x,y,z = pos.x, pos.y, pos.z end
+        if Lib.IsFunc(pos) then x,y,z = pos( t ) end
+        return x,y,z
+    end
+    
+    local zOrder = {}
+    local zTotal = 0
 
-    local function CalculateIconScreenData(wX, wY, wZ)
-
-        --[[ how to handle offset better]]
-
-        --[[ ody sv!
-            local tex       = nil
-            local hodor     = nil
-            local col       = OSI.BASECOLOR
-            local size      = OSI.GetOption( "iconsize" )
-            local offset    = OSI.GetOption( "offset" )
-            local dead      = OSI.GetOption( OSI.ROLE_DEAD )
-        ]]
-
-
-        local iconData = {}
+    local function CalculateIconScreenData(pos)
+        local wX, wY, wZ = GetPosition(pos)
 
         wY = wY + 2*100 --offset
+        local ata = {}
 
         -- calculate unit view position
         local pX = wX * i11 + wY * i21 + wZ * i31 + i41
@@ -109,6 +133,9 @@ local function OnUpdate()
         
         -- early out if icon is behind camera
         if pZ < 0 then return false end
+        zorder[1 + zo_floor( pZ * 100 )] = icon --check
+        ztotal = ztotal + 1
+
         iconData.pZ = pZ
 
         -- calculate unit screen position
@@ -127,16 +154,14 @@ local function OnUpdate()
         return iconData
     end
 
-
-
     local renderCache = {}
 
     for i = 1, GROUP_SIZE_MAX do 
         local unit = "group"..i
         local displayName = GetUnitDisplayName(unit) 
         
-        if playerIconList[displayName] then 
-
+        if playerIcons[displayName] then 
+            CalculateIconScreenData(unit) 
         end        
     end
 
@@ -270,27 +295,41 @@ end
 --[[ ---------------- ]]
 --[[ -- Initialize -- ]] 
 --[[ ---------------- ]]
-local function OnPlayerActivated() 
-    EM:UnregisterForEvent(idLFI, EVENT_PLAYER_ACTIVATED)
-    EM:RegisterForUpdate(idLFI, SV.interval, OnUpdate)
-end
 
 local function Initialize() 
     
     -- load SavedVariables 
     SV = ZO_SavedVars:NewAccountWide('LFI_SV', 1, nil, defaultSV, 'Settings')
 
-    EM:RegisterForEvent(idLFI, EVENT_PLAYER_ACTIVATED, OnPlayerActivated)
-    -- register update (maybe on first player activation)
+    -- register update on first player activated event
+    EM:RegisterForEvent(idLFI, EVENT_PLAYER_ACTIVATED, function() 
+            EM:UnregisterForEvent(idLFI, EVENT_PLAYER_ACTIVATED)
+            EM:RegisterForUpdate(idLFI, SV.interval, OnUpdate)
+        end)
 
     -- create render space 
-    RenderSpace = WM:CreateControl( 'LFI_Space', GuiRoot, CT_CONTROL )
+    RenderSpace = WM:CreateControl( 'LFI_RenderSpace', GuiRoot, CT_CONTROL )
     RenderSpace:SetAnchorFill( GuiRoot )
     RenderSpace:Create3DRenderSpace() 
     RenderSpace:SetHidden( true ) 
 
-    DefineMenu()
+    -- create parent window for icons 
+    Window = WM:CreateTopLevelWindow( 'LFI_Window' )
+    Window:SetClampedToScreen( true )
+    Window:SetMouseEnabled( false )
+    Window:SetMovable( false )
+    Window:SetAnchorFill( GuiRoot )
+	Window:SetDrawLayer( DL_BACKGROUND )
+	Window:SetDrawTier( DT_LOW )
+	Window:SetDrawLevel( 0 )
 
+    -- create parent window scene fragment
+    local frag = ZO_HUDFadeSceneFragment:New( Window )
+	HUD_UI_SCENE:AddFragment( frag )
+    HUD_SCENE:AddFragment( frag )
+    LOOT_SCENE:AddFragment( frag )
+
+    DefineMenu()
 end 
 
 local function OnAddonLoaded(_, addonName) 
