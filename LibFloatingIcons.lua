@@ -11,9 +11,19 @@ local WM = GetWindowManager()
 --[[ -- Globals -- ]]
 --[[ ------------- ]]
 
+-- necessary? 
+LFI_CATEGORY_INVALID = 0
+LFI_CATEGORY_PLAYER = 1 
+LFI_CATEGORY_POSITION = 2
+LFI_CATEGORY_COMPANION = 3
+LFI_CATEGORY_ASSISTANT = 4 
+LFI_CATEGORY_PET = 5 
+
+
+
 LFI_TYPE_IDENTIFY = 1
-LFI_TYPE_MECHANIC = 2 
---LFI_TYPE_
+LFI_TYPE_BUFF = 2
+LFI_TYPE_MECHANIC = 3 
 
 
 
@@ -68,11 +78,12 @@ local function CreateIcon()
 end 
 
 local function GrapIcon() 
-
+    -- takes a free icon from pool, 
+    -- if none exist, creates a new one
 end
 
 local function ReleaseIcon() 
-
+    -- puts a now unused icon back in pool 
 end
 
 --[[ ------------ ]]
@@ -180,10 +191,30 @@ local function OnZoneIdChange()
     positionIcons = ZO_ShallowCopy( positionIconVault[newZoneId] )
 end 
 
+--[[ --------------------------- ]]
+--[[ ---- Support Functions ---- ]]
+--[[ -- for Exposed Framework -- ]]
+--[[ --------------------------- ]]
+
+local function RegisterPlayerIcon(type, displayName, ) 
+end
+
+local function RegisterNpcIcon() 
+end 
+
+local function RegisterPositionIcon() 
+end
 
 --[[ ----------------------- ]]
 --[[ -- Exposed Functions -- ]]
 --[[ ----------------------- ]]
+
+-- iconData: 
+    -- texture (string or callback)  first param time, second unitTag, third custom (must be provided as callback)
+    -- color (rgba or callback)
+    -- size (nummer (or callback???) )
+
+    --> wenn kein callback übergeben, in ein callback umwandeln beim abspeichern für einfacheres handhaben in der update function
 
 -- positionCallback for moving position icon 
 -- blinking 
@@ -193,10 +224,38 @@ end
 -- for unique icon: texture, callback for animation, 
 
 -- overwrite / return existing icons 
+function LFI.RegisterMechanicIcon(displayName, remainsAfterDead )
+
+    RegisterPlayerIcon(LFI_TYPE_MECHANIC, displayName)
+end 
+
+-- functions to get information about current mechanic icon 
+
+-- 
+-- register here not player but buff, which will then be shown for everybody (+ as selected) 
+function LFI.RegisterBuffIcon() 
+
+end 
 
 
-function LFI.RegisterPlayerIcon(player, type, iconData)
-    playerIconList[player] = true 
+function LFI.RegisterIdentifierIcon(displayName, )
+
+
+end 
+
+
+function LFI.RegisterPlayerIcon(displayName, type, iconData)
+    -- type is LFI_TYPE_...
+    playerIconList[displayName] = true 
+
+    -- check if displayName has already entry, if not create one 
+    -- check if type has already entry 
+
+    -- grab icon, apply data 
+    -- data: (everything can be a value or a callback -> callback will receive game time as parameter (+ den bereits übergebenen???))
+        -- texture 
+        -- size 
+        -- color 
 end
 
 
