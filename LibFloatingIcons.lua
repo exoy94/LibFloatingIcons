@@ -1,10 +1,10 @@
 LibFloatingIcons = LibFloatingIcons or {}
 
-
 local LFI = LibFloatingIcons
 local Lib = LibExoYsUtilities
-local em = GetEventManager() 
-local wm = GetWindowManager()
+
+local EM = GetEventManager() 
+local WM = GetWindowManager()
  
 
 --[[ ------------- ]]
@@ -276,7 +276,7 @@ local function Initialize()
     -- register update (maybe on first player activation)
 
     -- create render space 
-    RenderSpace = wm:CreateControl( 'LFI_Space', GuiRoot, CT_CONTROL )
+    RenderSpace = WM:CreateControl( 'LFI_Space', GuiRoot, CT_CONTROL )
     RenderSpace:SetAnchorFill( GuiRoot )
     RenderSpace:Create3DRenderSpace() 
     RenderSpace:SetHidden( true ) 
@@ -288,11 +288,11 @@ end
 local function OnAddonLoaded(_, addonName) 
     if addonName == idLFI then 
         Initialize()
-        em:UnregisterForEvent(idLFI, EVENT_ADD_ON_LOADED)
+        EM:UnregisterForEvent(idLFI, EVENT_ADD_ON_LOADED)
     end
 end
 
-em:RegisterForEvent(idLFI, EVENT_ADD_ON_LOADED, OnAddonLoaded)
+EM:RegisterForEvent(idLFI, EVENT_ADD_ON_LOADED, OnAddonLoaded)
 
 
 
