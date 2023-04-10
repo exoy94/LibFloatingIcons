@@ -20,10 +20,10 @@ LFI_CATEGORY_ASSISTANT = 4
 LFI_CATEGORY_PET = 5 
 
 
-
 LFI_TYPE_IDENTIFY = 1
 LFI_TYPE_BUFF = 2
 LFI_TYPE_MECHANIC = 3 
+LFI_TYPE_MAX = 3 
 
 
 
@@ -39,6 +39,7 @@ local defaultSV = {
     ["scaling"] = true, 
     ["alpha"] = 1,
     ["maxSize"] = 5,
+    ["standardSize"] = 5, 
 }
 
 --[[ --------------- ]]
@@ -122,7 +123,7 @@ local function OnUpdate()
 
     local function GetPosition(pos) 
         local x,y,z 
-        if Lib.IsString(pos) then  ~, x,y,z = GetUnitWorldPosition(pos) end
+        if Lib.IsString(pos) then  _, x,y,z = GetUnitWorldPosition(pos) end
         if Lib.IsTable(pos) then x,y,z = pos.x, pos.y, pos.z end
         if Lib.IsFunc(pos) then x,y,z = pos( t ) end
         return x,y,z
@@ -172,7 +173,14 @@ local function OnUpdate()
         local displayName = GetUnitDisplayName(unit) 
         
         if playerIcons[displayName] then 
-            CalculateIconScreenData(unit) 
+            local offset = SV.offset
+            for j = 1, LFI_TYPE_MAX do 
+                if playerIcons[displayName][j] then 
+                    local iconData = x
+                    CalculateIconScreenData(unit) 
+                    offset = offset + size + margin
+                end
+            end
         end        
     end
 
@@ -196,18 +204,19 @@ end
 --[[ -- for Exposed Framework -- ]]
 --[[ --------------------------- ]]
 
-local function RegisterPlayerIcon(type, displayName, ) 
-end
-
-local function RegisterNpcIcon() 
-end 
-
-local function RegisterPositionIcon() 
+local function FormatIconData(i)
+    local r = {}
+    r.tex = Lib.IsFunc(i.tex) and i.tex or function() return i.tex end
+    r.col = Lib.IsTable(i.col) and i.col or {1,1,1,1}
+    r.size = Lib.IsNumber(i.size) and i.size or SV.standardSize
+    return r 
 end
 
 --[[ ----------------------- ]]
 --[[ -- Exposed Functions -- ]]
 --[[ ----------------------- ]]
+
+
 
 -- iconData: 
     -- texture (string or callback)  first param time, second unitTag, third custom (must be provided as callback)
@@ -238,10 +247,36 @@ function LFI.RegisterBuffIcon()
 end 
 
 
-function LFI.RegisterIdentifierIcon(displayName, )
+function LFI.RegisterPlayerIcon(, displayName, iconData) 
+    if not id then return end -- to keep track of who put it there, necessary? 
+    -- check to allow overwrite? 
+    if not displayName then return end
+    iconData = Lib.VerifyHashTable(iconData, {"tex"}) and FormatIconData(iconData) or nil 
+    if not iconData then return end 
 
+    if 
 
+end
+
+function LFI.RegisterIdentifierIcon(...)
+    LFI.RegisterPlayerIcon(LFI_TYPE_IDENTIFY, ...)
 end 
+
+function LFI.RegisterMechanicIcon(...) 
+    LFI.RegisterPlayerIcon(LFI_TYPE_MECHANIC, ...)
+end
+
+
+function LFI.HasPlayerIcon(type, displayName) 
+
+end
+
+function LFI.HasPlayerIdentifierIcon(displayName)
+
+    -- return true if identifier icon is already provided (and by whom?)
+end
+
+
 
 
 function LFI.RegisterPlayerIcon(displayName, type, iconData)
