@@ -8,7 +8,7 @@ local WM = GetWindowManager()
  
 
 --[[ ------------- ]]
---[[ -- Globals -- ]]
+--[[ -- Globals -- ]] --necessary? 
 --[[ ------------- ]]
 
 -- necessary? 
@@ -49,6 +49,10 @@ local defaultSV = {
 local idLFI = "LibFloatingIcons"
 local vLFI = 0
 
+local catId = 1
+local catBuff = 2
+local catMech = 3 
+local numCat = 3
 
 local currentZone = 0
 
@@ -78,7 +82,7 @@ local function CreateIcon()
     }
 end 
 
-local function GrapIcon() 
+local function AssignIcon() 
     -- takes a free icon from pool, 
     -- if none exist, creates a new one
 end
@@ -132,7 +136,7 @@ local function OnUpdate()
     local zOrder = {}
     local zTotal = 0
 
-    local function CalculateIconScreenData(pos)
+    local function UpdateIcon(pos, icon, data)
         local wX, wY, wZ = GetPosition(pos)
 
         wY = wY + 2*100 --offset
@@ -163,6 +167,10 @@ local function OnUpdate()
         local alpha = SV.fadeout and zo_clampedPercentBetween( 1, SV.fadedist * 100, dist ) or 1
         iconData.fade = SV.alpha * alpha * alpha  
 
+        -- adjust color, texture etc if they are callback 
+
+        
+
         return iconData
     end
 
@@ -177,8 +185,9 @@ local function OnUpdate()
             for j = 1, LFI_TYPE_MAX do 
                 if playerIcons[displayName][j] then 
                     local iconData = x
-                    CalculateIconScreenData(unit) 
+                    CalculateIconScreenData(unit, data) 
                     offset = offset + size + margin
+                    -- update other properties 
                 end
             end
         end        
@@ -204,26 +213,79 @@ end
 --[[ -- for Exposed Framework -- ]]
 --[[ --------------------------- ]]
 
-local function FormatIconData(i)
+local function VerifyHashTable(t, e) 
+    if not type(t) == "table" then return false end 
+    for _,ev in ipairs(e) do 
+      if not t[ev] then return false end
+    end
+    return true
+end
+
+local function FormatData(i)
     local r = {}
-    r.tex = Lib.IsFunc(i.tex) and i.tex or function() return i.tex end
-    r.col = Lib.IsTable(i.col) and i.col or {1,1,1,1}
-    r.size = Lib.IsNumber(i.size) and i.size or SV.standardSize
+    r.tex =     type(i.tex) == "function"   and i.tex   or function() return i.tex end
+    r.col =     type(i.col) =="table"       and i.col   or {1,1,1,1}
+    r.size =    type(i.size)=="number"      and i.size  or SV.standardSize
     return r 
+end
+
+local function HasNecessaryParamter(id, displayName, data) 
+    if not id then return false end
+    if not type(displayName) == "string" then return false end 
+    if not string.find(displayName, "@") then return false end
+    if not VerifyHashTable(data, {tex}) then return false end 
+    return true
 end
 
 --[[ ----------------------- ]]
 --[[ -- Exposed Functions -- ]]
 --[[ ----------------------- ]]
 
+--TODO add temporary overwrite, meaning the current icon gets stored and re-enabled when the "new one" gets removed again
+
+-- data:    -- texture (string or callback)  first param time, second unitTag, third custom (must be provided as callback)
+            -- color (rgba or callback)
+            -- size (nummer (or callback???) )
+        --> wenn kein callback übergeben, in ein callback umwandeln beim abspeichern für einfacheres handhaben in der update function
+
+local exampleIconData = {
+    tex = "textureString", 
+    parTex = >callback<,
+    color  
+}
+
+-- is id necessary? 
+function LFI.RegisterIdentifierIcon(id, displayName, data, meta)
+    -- bunch of checks for propper input
+    if not HasNecessaryParameter(id, displayName, data) then return end
+    data = FormatData(data)
+
+    -- check if player already has a table entry and if not, create one 
+    -- todo variables for types 
+    playerIcons[displayName][catId] = {
+        id = id, 
+        icon = AssignIcon(), 
+        --callback = ..., <<< list, if and what values have callback, maybe include in data table  
+        meta = meta, 
+        data = data, 
+    }
+end 
 
 
--- iconData: 
-    -- texture (string or callback)  first param time, second unitTag, third custom (must be provided as callback)
-    -- color (rgba or callback)
-    -- size (nummer (or callback???) )
+function LFI.UnregisterIdentifierIcon(id, displayName) parTex 
 
-    --> wenn kein callback übergeben, in ein callback umwandeln beim abspeichern für einfacheres handhaben in der update function
+end
+
+
+function LFI.HasIdentifierIcon(displayName) 
+    -- TODO check if entry exists 
+    if true then 
+        return ZO_ShallowCopy( playerIcons[displayName][catId][meta] ) 
+    else 
+        return nil 
+    end 
+end
+
 
 -- positionCallback for moving position icon 
 -- blinking 
@@ -258,18 +320,20 @@ function LFI.RegisterPlayerIcon(, displayName, iconData)
 
 end
 
-function LFI.RegisterIdentifierIcon(...)
-    LFI.RegisterPlayerIcon(LFI_TYPE_IDENTIFY, ...)
-end 
 
-function LFI.RegisterMechanicIcon(...) 
-    LFI.RegisterPlayerIcon(LFI_TYPE_MECHANIC, ...)
+
+
+
+
+function LFI.RegisterMechanicIcon() 
+
 end
 
 
 function LFI.HasPlayerIcon(type, displayName) 
 
 end
+
 
 function LFI.HasPlayerIdentifierIcon(displayName)
 
@@ -357,7 +421,7 @@ local function DefineMenu()
     local LAM2 = LibAddonMenu2
 
     local panelData = {
-        type='panel', 
+        type="panel", 
         name=idLFI, 
         displayName=idLFI, 
         author = "@|c00FF00ExoY|r94 (PC/EU)", 
