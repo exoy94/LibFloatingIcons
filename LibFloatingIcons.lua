@@ -91,6 +91,18 @@ local function ReleaseIcon()
     -- puts a now unused icon back in pool 
 end
 
+--[[ ----------------]]
+--[[ -- Utilities -- ]]
+--[[ --------------- ]]
+
+local function GetValue(v, ...) 
+    if type(v) == "function" then 
+        return v(...) 
+    else   
+        return v 
+    end
+end   
+
 --[[ ------------ ]]
 --[[ -- Update -- ]]
 --[[ ------------ ]]
@@ -169,7 +181,7 @@ local function OnUpdate()
 
         -- adjust color, texture etc if they are callback 
 
-        
+
 
         return iconData
     end
@@ -241,6 +253,37 @@ end
 --[[ -- Exposed Functions -- ]]
 --[[ ----------------------- ]]
 
+
+
+function LFI.RegisterIdentifierIcon(displayName, data, meta) 
+
+    if not playerIcons[displayName] then 
+        playerIcons[displayName] = {catId = {}, catBuff = {}, catMech = {} }
+    end
+
+    playerIcons[displayName][catId] = {
+        icon = AssignIcon(),
+        data = data, 
+        meta = meta, 
+    }
+
+end
+
+
+function LFI.UnregisterIdentifierIcon(displayName) 
+    playerIcons[displayName][catId] = {}
+end
+
+
+function LFI.HasIdentifierIcon(displayName) 
+    local entry = playerIcons[displayName][catId]
+    return not ZO_IsEmptyTable(entry) and ZO_ShallowCopy(entry.meta) or false 
+end
+
+
+function LFI.TemporaryOverwriteIdentifierData(displayName, value, overwrite, termination) 
+
+end
 --TODO add temporary overwrite, meaning the current icon gets stored and re-enabled when the "new one" gets removed again
 
 -- data:    -- texture (string or callback)  first param time, second unitTag, third custom (must be provided as callback)
@@ -248,31 +291,14 @@ end
             -- size (nummer (or callback???) )
         --> wenn kein callback übergeben, in ein callback umwandeln beim abspeichern für einfacheres handhaben in der update function
 
-local exampleIconData = {
-    tex = "textureString", 
-    parTex = >callback<,
-    color  
-}
-
--- is id necessary? 
-function LFI.RegisterIdentifierIcon(id, displayName, data, meta)
-    -- bunch of checks for propper input
-    if not HasNecessaryParameter(id, displayName, data) then return end
-    data = FormatData(data)
-
-    -- check if player already has a table entry and if not, create one 
-    -- todo variables for types 
-    playerIcons[displayName][catId] = {
-        id = id, 
-        icon = AssignIcon(), 
-        --callback = ..., <<< list, if and what values have callback, maybe include in data table  
-        meta = meta, 
-        data = data, 
-    }
-end 
+--local exampleIconData = {
+--    tex = "textureString", 
+--    parTex = >callback<,
+--    color  
+--}
 
 
-function LFI.UnregisterIdentifierIcon(id, displayName) parTex 
+function LFI.UnregisterIdentifierIcon(id, displayName) --parTex 
 
 end
 
@@ -309,15 +335,12 @@ function LFI.RegisterBuffIcon()
 end 
 
 
-function LFI.RegisterPlayerIcon(, displayName, iconData) 
+function LFI.RegisterPlayerIcon(displayName, iconData) 
     if not id then return end -- to keep track of who put it there, necessary? 
     -- check to allow overwrite? 
     if not displayName then return end
     iconData = Lib.VerifyHashTable(iconData, {"tex"}) and FormatIconData(iconData) or nil 
     if not iconData then return end 
-
-    if 
-
 end
 
 
