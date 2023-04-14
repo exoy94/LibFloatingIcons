@@ -281,7 +281,7 @@ function LFI.HasIdentifierIcon(displayName)
 end
 
 
-function LFI.TemporaryOverwriteIdentifierData(displayName, value, overwrite, termination) 
+function LFI.OverwriteIdentifierData(displayName, value, overwrite, termination) 
 
 end
 --TODO add temporary overwrite, meaning the current icon gets stored and re-enabled when the "new one" gets removed again
