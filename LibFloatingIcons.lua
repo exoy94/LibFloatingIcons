@@ -52,7 +52,9 @@ local vLFI = 0
 local catId = 1
 local catBuff = 2
 local catMech = 3 
-local numCat = 3
+local catPos = 4
+
+local numCat = 4
 
 local currentZone = 0
 
@@ -63,33 +65,6 @@ local positionIcons = {}
 local positionIconVault = {}
 
 local iconCache = {}
-
---[[ ------------------ ]]
---[[ -- Icon Handler -- ]]
---[[ ------------------ ]]
-
-local RenderSpace 
-local Window 
-local iconPool = {}
-
-local function CreateIcon() 
-    local icon = WM:CreateControl( name, Window, CT_TEXTURE)
-    icon:ClearAnchors()
-    icon:SetAnchor( CENTER, Window, CENTER, 0, 0 )
-    icon:SetHidden(true)
-    return {
-        ["ctrl"] = icon, 
-    }
-end 
-
-local function AssignIcon() 
-    -- takes a free icon from pool, 
-    -- if none exist, creates a new one
-end
-
-local function ReleaseIcon() 
-    -- puts a now unused icon back in pool 
-end
 
 --[[ ----------------]]
 --[[ -- Utilities -- ]]
@@ -102,6 +77,74 @@ local function GetValue(v, ...)
         return v 
     end
 end   
+
+
+--[[ --------------------- ]]
+--[[ -- Control Handler -- ]]
+--[[ --------------------- ]]
+
+local RenderSpace 
+local Window 
+local controlPool = {} 
+local poolHandler = {}  -- keeps track of how many controls of one catorgory are currently not in use
+local cacheHandler = {} -- keeps track, of how many controls of one category exist
+
+
+local function CreateNewControl(cat) 
+    local name = string.format("%s_%s_%d_%d", idLFI, "Ctrl", cat, cacheHandder[cat])
+    local ctrl = WM:CreateControl( name, Window, CT_CONTROL) 
+
+    ctrl:ClearAnchors()
+    ctrl:SetAnchor( CENTER, Window, CENTER, 0, 0)
+    ctrl:SetHidden(false) 
+
+    ctrl.cat = cat 
+    
+    -- support functions 
+    local function AddTexture() 
+        local tex = WM:CreateControl( name.."_Texture", ctrl, CT_TEXTURE)
+
+        return tex
+    end
+
+    -- add different controls depending on category 
+    if cat == catPos then 
+
+    elseif cat == catId then 
+        ctrl.tex = AddTexture()
+    elseif cat == catBuff then 
+
+    elseif cat == catMech then 
+
+    end
+
+    return ctrl 
+end
+
+
+local function AssignControl(cat)
+    
+    if poolHandler[cat] > 0 then 
+        local ctrl = controlPool[cat][poolHandler[cat]]
+        table.remove(controlPool[cat])
+        poolHandler[cat] = poolHanlder[cat] - 1
+        ctrl:SetHidden(false) 
+        return ctrl 
+    else 
+        cacheHandler[cat] = cacheHandler[cat] + 1
+        return CreateNewControl(cat)
+    end
+
+end
+
+
+local function ReleaseControl(ctrl)
+    ctrl:SetHidden(true) 
+    table.insert(controlPool[ctrl.cat], ctrl)
+    poolHandler[ctrl.cat] = poolHandler[ctrl.cat] + 1
+end
+
+
 
 --[[ ------------ ]]
 --[[ -- Update -- ]]
@@ -148,11 +191,10 @@ local function OnUpdate()
     local zOrder = {}
     local zTotal = 0
 
-    local function UpdateIcon(pos, icon, data)
+    local function UpdateIcon(pos, ctrl, data)
         local wX, wY, wZ = GetPosition(pos)
 
         wY = wY + 2*100 --offset
-        local ata = {}
 
         -- calculate unit view position
         local pX = wX * i11 + wY * i21 + wZ * i31 + i41
@@ -161,29 +203,33 @@ local function OnUpdate()
         
         -- early out if icon is behind camera
         if pZ < 0 then return false end
-        zorder[1 + zo_floor( pZ * 100 )] = icon --TODO check
+        zorder[1 + zo_floor( pZ * 100 )] = ctrl 
         ztotal = ztotal + 1
-
-        iconData.pZ = pZ
 
         -- calculate unit screen position
         local w, h = GetWorldDimensionsOfViewFrustumAtDepth( pZ )
-        iconData.x, iconData.y = pX * uiW / w, -pY * uiH / h
+        local x, y = pX * uiW / w, -pY * uiH / h
 
         -- calculate distance
         local dX, dY, dZ = wX - cX, wY - cY, wZ - cZ
         local dist       = 1 + zo_sqrt( dX * dX + dY * dY + dZ * dZ )
 
-        iconData.scale = SV.scaling and 1000 / dist or 1
+        -- calculate scale 
+        local scale = SV.scaling and 1000 / dist or 1
 
+        -- calculate alpha 
         local alpha = SV.fadeout and zo_clampedPercentBetween( 1, SV.fadedist * 100, dist ) or 1
-        iconData.fade = SV.alpha * alpha * alpha  
+        local fade = SV.alpha * alpha * alpha  
 
-        -- adjust color, texture etc if they are callback 
-        -- have a callback list? 
+        -- apply settings to control 
+        ctrl:ClearAnchors()
+        ctrl:SetAnchor(CENTER, Window, CENTER, x, y)
+        ctrl:SetScale( scale )
+        ctrl:SetAlpha( fade )
 
+        --TODO callbacks for texture, color etc.
 
-        return iconData
+        return true
     end
 
     local renderCache = {}
@@ -433,10 +479,7 @@ local function DefineSetting(setting, name, var, param, warning)
         s.getFunc = function() return var end
         s.setFunc = function(v) var = v end 
         if setting == "slider" then  
-            s.min = param[1] 
-            s.max = param[2] 
-            s.step = param[3]
-            s.decimals = 2
+            s.min, s.max, s.step, s.decimals = param[1], param[2], param[3], 2
         end
         if warning then 
             s.warning = "Changes require Reloadui"
@@ -491,6 +534,14 @@ local function Initialize()
             EM:UnregisterForEvent(idLFI, EVENT_PLAYER_ACTIVATED)
             EM:RegisterForUpdate(idLFI, SV.interval, OnUpdate)
         end)
+
+    --initialize tables for control handler 
+
+    for i=1:numCat do 
+        controlPool[i] = {}
+        poolHandler[i] = 0
+        cacheHandler[i] = 0
+    end
 
     -- create render space 
     RenderSpace = WM:CreateControl( 'LFI_RenderSpace', GuiRoot, CT_CONTROL )
