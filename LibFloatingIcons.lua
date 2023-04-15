@@ -75,7 +75,7 @@ local iconPool = {}
 local function CreateIcon() 
     local icon = WM:CreateControl( name, Window, CT_TEXTURE)
     icon:ClearAnchors()
-    icon:SetAnchor( BOTTOM, OSI.win, CENTER, 0, 0 )
+    icon:SetAnchor( CENTER, Window, CENTER, 0, 0 )
     icon:SetHidden(true)
     return {
         ["ctrl"] = icon, 
@@ -109,7 +109,7 @@ end
 
 local function OnUpdate()   
 
-    -- early out, check if any icons need to be rendered
+    --TODO early out, check if any icons need to be rendered
 
     local t = GetGameTimeMilliseconds() 
     -- screen dimensions
@@ -161,7 +161,7 @@ local function OnUpdate()
         
         -- early out if icon is behind camera
         if pZ < 0 then return false end
-        zorder[1 + zo_floor( pZ * 100 )] = icon --check
+        zorder[1 + zo_floor( pZ * 100 )] = icon --TODO check
         ztotal = ztotal + 1
 
         iconData.pZ = pZ
@@ -180,7 +180,7 @@ local function OnUpdate()
         iconData.fade = SV.alpha * alpha * alpha  
 
         -- adjust color, texture etc if they are callback 
-
+        -- have a callback list? 
 
 
         return iconData
@@ -192,6 +192,10 @@ local function OnUpdate()
         local unit = "group"..i
         local displayName = GetUnitDisplayName(unit) 
         
+        --WARNING filling table for testing purposes
+        local testEntry = {}
+        playerIcons[displayName] = testEntry
+
         if playerIcons[displayName] then 
             local offset = SV.offset
             for j = 1, LFI_TYPE_MAX do 
@@ -522,6 +526,15 @@ end
 
 EM:RegisterForEvent(idLFI, EVENT_ADD_ON_LOADED, OnAddonLoaded)
 
+
+--[[ ----------- ]]
+--[[ -- Debug -- ]]
+--[[ ----------- ]]
+
+function LFI.PrintPosition()
+    local zone, wX, wY, wZ = GetUnitRawWorldPosition("player")
+    d( zo_strformat("Position: <<1>>(zone) {x;y;z}={<<2>>;<<3>>;<<4>>}", zone, wX, wY, wZ) )
+end
 
 
 --[[ Ideas ]]
