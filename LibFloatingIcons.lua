@@ -8,23 +8,8 @@ local WM = GetWindowManager()
  
 
 --[[ ------------- ]]
---[[ -- Globals -- ]] --necessary? 
+--[[ -- Globals -- ]] 
 --[[ ------------- ]]
-
--- necessary? 
-LFI_CATEGORY_INVALID = 0
-LFI_CATEGORY_PLAYER = 1 
-LFI_CATEGORY_POSITION = 2
-LFI_CATEGORY_COMPANION = 3
-LFI_CATEGORY_ASSISTANT = 4 
-LFI_CATEGORY_PET = 5 
-
-
-LFI_TYPE_IDENTIFY = 1
-LFI_TYPE_BUFF = 2
-LFI_TYPE_MECHANIC = 3 
-LFI_TYPE_MAX = 3 
-
 
 
 --[[ --------------------- ]]
@@ -46,25 +31,20 @@ local defaultSV = {
 --[[ -- Variables -- ]]
 --[[ --------------- ]]
 
+-- addon variables 
 local idLFI = "LibFloatingIcons"
 local vLFI = 0
 
+-- categories 
 local catId = 1
 local catBuff = 2
 local catMech = 3 
 local catPos = 4
-
 local numCat = 4
 
-local currentZone = 0
-
-local icons = {}
-local playerIcons = {}
-local playerIconVault
-local positionIcons = {}
-local positionIconVault = {}
-
-local iconCache = {}
+-- player data 
+local player = ""
+local cZone = 0  
 
 --[[ ----------------]]
 --[[ -- Utilities -- ]]
@@ -241,34 +221,40 @@ local function OnUpdate()
         --WARNING filling table for testing purposes
         local testEntry = {}
         playerIcons[displayName] = testEntry
+        -- END WARNING 
 
         if playerIcons[displayName] then 
             local offset = SV.offset
-            for j = 1, LFI_TYPE_MAX do 
+            for j = 1, 3 do 
                 if playerIcons[displayName][j] then 
-                    local iconData = x
-                    CalculateIconScreenData(unit, data) 
-                    offset = offset + size + margin
+                    
+                    -- CalculateIconScreenData(unit, data) 
+                    -- offset = offset + size + margin
                     -- update other properties 
                 end
             end
         end        
     end
+    
+    -- sort draw order
+    if ztotal > 1 then
+        local keys = { }
+        for k in pairs( zorder ) do
+            table.insert( keys, k )
+        end
+        table.sort( keys )
+
+        -- adjust draw order
+        for _, k in ipairs( keys ) do
+            zorder[k].ctrl:SetDrawLevel( ztotal )
+            ztotal = ztotal - 1
+        end
+    end
 
 end
 
 
---[[ ------------ ]]
---[[ -- Events -- ]]
---[[ ------------ ]]
 
--- update current zoneId 
-local function OnZoneIdChange() 
-    local newZoneId 
-    currentZone = newZoneId
-    if not positionIconVault[newZoneId] then return false end
-    positionIcons = ZO_ShallowCopy( positionIconVault[newZoneId] )
-end 
 
 --[[ --------------------------- ]]
 --[[ ---- Support Functions ---- ]]
@@ -405,6 +391,16 @@ end
 
 -- allow for animated unique icons --> understand animations --> 
 
+--[[ ------------ ]]
+--[[ -- Events -- ]]
+--[[ ------------ ]]
+
+local function OnZoneChange(_, zoneName, subZoneName, newSubZone, zoneId, subZoneId) 
+    --TODO investigate subzones
+    if zoneId ~= cZone then 
+        cZone = zoneId
+    end
+end 
 
 --[[ ---------------- ]]
 --[[ -- Initialize -- ]] 
@@ -421,8 +417,14 @@ local function Initialize()
             EM:RegisterForUpdate(idLFI, SV.interval, OnUpdate)
         end)
 
-    --initialize tables for control handler 
+    -- initialize player data 
+    cZone, _, _, _ = GetUnitRawWorldPosition("player") 
+    player = GetUnitDisplayName("player")
 
+    EM:RegisterForEvent(idLFI, EVENT_ZONE_CHANGED, OnZoneChange
+
+
+    -- initialize tables for control handler 
     for i=1:numCat do 
         controlPool[i] = {}
         poolHandler[i] = 0
@@ -473,6 +475,9 @@ function LFI.PrintPosition()
     d( zo_strformat("Position: <<1>>(zone) {x;y;z}={<<2>>;<<3>>;<<4>>}", zone, wX, wY, wZ) )
 end
 
+SLASH_COMMANDS["/lfi"] = function()
+        d(cZone)       
+    end
 
 --[[ Ideas ]]
 --[[
