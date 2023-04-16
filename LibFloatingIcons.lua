@@ -46,6 +46,12 @@ local numCat = 4
 local player = ""
 local cZone = 0  
 
+-- tables 
+local playerIcons = {}
+local petIcons = {} --including companions, assistant etc. ???? 
+local positionIcons = {} 
+
+
 --[[ ----------------]]
 --[[ -- Utilities -- ]]
 --[[ --------------- ]]
@@ -67,7 +73,7 @@ local RenderSpace
 local Window 
 local controlPool = {} 
 local poolHandler = {}  -- keeps track of how many controls of one catorgory are currently not in use
-local cacheHandler = {} -- keeps track, of how many controls of one category exist
+local cacheHandler = {} -- keeps track of how many controls of one category exist
 
 
 local function CreateNewControl(cat) 
@@ -212,12 +218,13 @@ local function OnUpdate()
         return true
     end
 
-    local renderCache = {}
 
     for i = 1, GROUP_SIZE_MAX do 
         local unit = "group"..i
         local displayName = GetUnitDisplayName(unit) 
         
+        --TODO check if unit is player and compare with settings 
+
         --WARNING filling table for testing purposes
         local testEntry = {}
         playerIcons[displayName] = testEntry
@@ -233,7 +240,10 @@ local function OnUpdate()
                     -- update other properties 
                 end
             end
-        end        
+        end   
+        
+        -- TODO add position icons 
+        -- TODO add icons for pets and companions 
     end
     
     -- sort draw order
@@ -421,7 +431,7 @@ local function Initialize()
     cZone, _, _, _ = GetUnitRawWorldPosition("player") 
     player = GetUnitDisplayName("player")
 
-    EM:RegisterForEvent(idLFI, EVENT_ZONE_CHANGED, OnZoneChange
+    EM:RegisterForEvent(idLFI, EVENT_ZONE_CHANGED, OnZoneChange)
 
 
     -- initialize tables for control handler 
