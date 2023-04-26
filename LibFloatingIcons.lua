@@ -25,6 +25,7 @@ local defaultSV = {
     ["alpha"] = 1,
     ["maxSize"] = 5,
     ["standardSize"] = 5, 
+    ["debug"] = false, 
 }
 
 --[[ --------------- ]]
@@ -55,6 +56,12 @@ local positionIcons = {}
 --[[ ----------------]]
 --[[ -- Utilities -- ]]
 --[[ --------------- ]]
+
+local function Debug(str) 
+    if SV.debug then 
+        d( "LFI: "..str) 
+    end
+end
 
 local function GetValue(v, ...) 
     if type(v) == "function" then 
@@ -354,12 +361,10 @@ end
 --[[ -- Menu -- ]]
 --[[ ---------- ]]
 
-local function DefineSetting(setting, name, var, param, warning)
-    local s = {}
-        s.type = setting
-        s.name = name 
-        s.getFunc = function() return var end
-        s.setFunc = function(v) var = v end 
+local function DefineSetting(setting, name, tab, var, param, warning)
+    local s = {type=setting, name=name}
+        s.getFunc = function() return tab[var] end
+        s.setFunc = function(v) tab[var] = v end 
         if setting == "slider" then  
             s.min, s.max, s.step, s.decimals = param[1], param[2], param[3], 2
         end
@@ -385,13 +390,15 @@ local function DefineMenu()
     --TODO add describtions and maybe support for multiple languages? 
     --table.insert(optionsTable, Lib.FeedbackSubmenu(idLFI, "info3599-LibFloatingIcons.html"))
     table.insert(optionsTable, {type="header", name="Performance"})
-    table.insert(optionsTable, DefineSetting("slider", "Update Interval", SV.interval, {0,100,10}, true))
+    table.insert(optionsTable, DefineSetting("slider", "Update Interval", SV, "interval", {0,100,10}, true))
     table.insert(optionsTable, {type = "header", name="Visual"})
-    table.insert(optionsTable, DefineSetting("slider", "Maximum Size", SV.maxSize, {1,10,1}))
-    table.insert(optionsTable, DefineSetting("checkbox", "Fadeout", SV.fadeout))
-    table.insert(optionsTable, DefineSetting("checkbox", "Distance Scaling", SV.scaling))
-    table.insert(optionsTable, DefineSetting("slider", "Fade Distance", SV.fadedist, {0,1,0.1}))
-    table.insert(optionsTable, DefineSetting("slider", "Alpha-MaxValue", SV.alpha, {0,1,0.1}))
+    table.insert(optionsTable, DefineSetting("slider", "Maximum Size", SV, "maxSize", {1,10,1}))
+    table.insert(optionsTable, DefineSetting("checkbox", "Fadeout", SV, "fadeout"))
+    table.insert(optionsTable, DefineSetting("checkbox", "Distance Scaling", SV, "scaling"))
+    table.insert(optionsTable, DefineSetting("slider", "Fade Distance", SV, "fadedist", {0,1,0.1}))
+    table.insert(optionsTable, DefineSetting("slider", "Alpha-MaxValue", SV, "alpha", {0,1,0.1}))
+    table.insert(optionsTable, {type="divider"})
+    table.insert(optionsTable, DefineSetting("checkbox", "Debug", SV, "debug"))
 
     LAM2:RegisterAddonPanel('LFI_Menu', panelData)
     LAM2:RegisterOptionControls('LFI_Menu', optionsTable)
@@ -405,12 +412,14 @@ end
 --[[ -- Events -- ]]
 --[[ ------------ ]]
 
-local function OnZoneChange(_, zoneName, subZoneName, newSubZone, zoneId, subZoneId) 
-    --TODO investigate subzones
+local function OnPlayerActivated() 
+    local zoneId = GetZoneId(GetUnitZoneIndex("player"))
     if zoneId ~= cZone then 
+        Debug( zo_strformat("zone change detected [<<1>> -> <<2>>]",cZone, zoneId) )
         cZone = zoneId
     end
-end 
+end
+
 
 --[[ ---------------- ]]
 --[[ -- Initialize -- ]] 
@@ -424,18 +433,16 @@ local function Initialize()
     -- register update on first player activated event
     EM:RegisterForEvent(idLFI, EVENT_PLAYER_ACTIVATED, function() 
             EM:UnregisterForEvent(idLFI, EVENT_PLAYER_ACTIVATED)
-            EM:RegisterForUpdate(idLFI, SV.interval, OnUpdate)
+            --EM:RegisterForUpdate(idLFI, SV.interval, OnUpdate)
+            EM:RegisterForEvent(idLFI, EVENT_PLAYER_ACTIVATED, OnPlayerActivated)
         end)
 
     -- initialize player data 
     cZone, _, _, _ = GetUnitRawWorldPosition("player") 
     player = GetUnitDisplayName("player")
 
-    EM:RegisterForEvent(idLFI, EVENT_ZONE_CHANGED, OnZoneChange)
-
-
     -- initialize tables for control handler 
-    for i=1:numCat do 
+    for i=1,numCat do 
         controlPool[i] = {}
         poolHandler[i] = 0
         cacheHandler[i] = 0
@@ -482,7 +489,7 @@ EM:RegisterForEvent(idLFI, EVENT_ADD_ON_LOADED, OnAddonLoaded)
 
 function LFI.PrintPosition()
     local zone, wX, wY, wZ = GetUnitRawWorldPosition("player")
-    d( zo_strformat("Position: <<1>>(zone) {x;y;z}={<<2>>;<<3>>;<<4>>}", zone, wX, wY, wZ) )
+    d( zo_strformat("LFI: {x;y;z}={<<2>>;<<3>>;<<4>>} zone:<<1>>", zone, wX, wY, wZ) )
 end
 
 SLASH_COMMANDS["/lfi"] = function()
