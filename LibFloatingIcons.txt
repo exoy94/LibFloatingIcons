@@ -8,6 +8,5 @@
 ## SavedVariables: LFI_SV
 
 ## DependsOn: LibAddonMenu-2.0>=30
-## DependsOn: LibExoYsUtilities
 
 LibFloatingIcons.lua

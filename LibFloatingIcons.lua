@@ -1,7 +1,7 @@
 LibFloatingIcons = LibFloatingIcons or {}
 
 local LFI = LibFloatingIcons
-local Lib = LibExoYsUtilities
+--local Lib = LibExoYsUtilities
 
 local EM = GetEventManager() 
 local WM = GetWindowManager()
@@ -168,9 +168,9 @@ local function OnUpdate()
 
     local function GetPosition(pos) 
         local x,y,z 
-        if Lib.IsString(pos) then  _, x,y,z = GetUnitWorldPosition(pos) end
-        if Lib.IsTable(pos) then x,y,z = pos.x, pos.y, pos.z end
-        if Lib.IsFunc(pos) then x,y,z = pos( t ) end
+        --if Lib.IsString(pos) then  _, x,y,z = GetUnitWorldPosition(pos) end
+        --if Lib.IsTable(pos) then x,y,z = pos.x, pos.y, pos.z end
+        --if Lib.IsFunc(pos) then x,y,z = pos( t ) end
         return x,y,z
     end
     
@@ -383,7 +383,7 @@ local function DefineMenu()
     local optionsTable = {} 
 
     --TODO add describtions and maybe support for multiple languages? 
-    table.insert(optionsTable, Lib.FeedbackSubmenu(idLFI, "info3599-LibFloatingIcons.html"))
+    --table.insert(optionsTable, Lib.FeedbackSubmenu(idLFI, "info3599-LibFloatingIcons.html"))
     table.insert(optionsTable, {type="header", name="Performance"})
     table.insert(optionsTable, DefineSetting("slider", "Update Interval", SV.interval, {0,100,10}, true))
     table.insert(optionsTable, {type = "header", name="Visual"})
