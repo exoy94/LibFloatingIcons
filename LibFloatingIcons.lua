@@ -26,6 +26,7 @@ local defaultSV = {
     ["maxSize"] = 5,
     ["standardSize"] = 5, 
     ["debug"] = false, 
+    ["dev"] = false, 
 }
 
 --[[ --------------- ]]
@@ -51,7 +52,7 @@ local cZone = 0
 local playerIcons = {}
 local petIcons = {} --including companions, assistant etc. ???? 
 local positionIcons = {} 
-
+local positionIconVault = {}
 
 --[[ ----------------]]
 --[[ -- Utilities -- ]]
@@ -84,11 +85,11 @@ local cacheHandler = {} -- keeps track of how many controls of one category exis
 
 
 local function CreateNewControl(cat) 
-    local name = string.format("%s_%s_%d_%d", idLFI, "Ctrl", cat, cacheHandder[cat])
+    local name = string.format("%s_%s_%d_%d", idLFI, "Ctrl", cat, cacheHandler[cat])
     local ctrl = WM:CreateControl( name, Window, CT_CONTROL) 
 
-    ctrl:ClearAnchors()
-    ctrl:SetAnchor( CENTER, Window, CENTER, 0, 0)
+    --ctrl:ClearAnchors()
+    --ctrl:SetAnchor( CENTER, Window, CENTER, 0, 0)
     ctrl:SetHidden(false) 
 
     ctrl.cat = cat 
@@ -96,7 +97,10 @@ local function CreateNewControl(cat)
     -- support functions 
     local function AddTexture() 
         local tex = WM:CreateControl( name.."_Texture", ctrl, CT_TEXTURE)
-
+        tex:ClearAnchors()
+        tex:SetAnchor( CENTER, ctrl, CENTER, 0, 0)
+        tex:SetTexture( "OdySupportIcons/icons/arrow.dds" )
+        tex:SetDimensions(50,50)
         return tex
     end
 
@@ -109,6 +113,8 @@ local function CreateNewControl(cat)
 
     elseif cat == catMech then 
 
+    elseif cat == catPos then 
+        ctrl.tex = AddTexture() 
     end
 
     return ctrl 
@@ -116,7 +122,6 @@ end
 
 
 local function AssignControl(cat)
-    
     if poolHandler[cat] > 0 then 
         local ctrl = controlPool[cat][poolHandler[cat]]
         table.remove(controlPool[cat])
@@ -184,9 +189,8 @@ local function OnUpdate()
     local zOrder = {}
     local zTotal = 0
 
-    local function UpdateIcon(pos, ctrl, data)
-        local wX, wY, wZ = GetPosition(pos)
-
+    local function UpdateIcon(coord, ctrl, data)
+        local wX, wY, wZ = coord.x, coord.y, coord.z
         wY = wY + 2*100 --offset
 
         -- calculate unit view position
@@ -196,8 +200,8 @@ local function OnUpdate()
         
         -- early out if icon is behind camera
         if pZ < 0 then return false end
-        zorder[1 + zo_floor( pZ * 100 )] = ctrl 
-        ztotal = ztotal + 1
+        zOrder[1 + zo_floor( pZ * 100 )] = ctrl 
+        zTotal = zTotal + 1
 
         -- calculate unit screen position
         local w, h = GetWorldDimensionsOfViewFrustumAtDepth( pZ )
@@ -216,7 +220,7 @@ local function OnUpdate()
 
         -- apply settings to control 
         ctrl:ClearAnchors()
-        ctrl:SetAnchor(CENTER, Window, CENTER, x, y)
+        ctrl:SetAnchor(BOTTOM, Window, CENTER, x, y)
         ctrl:SetScale( scale )
         ctrl:SetAlpha( fade )
 
@@ -232,39 +236,37 @@ local function OnUpdate()
         
         --TODO check if unit is player and compare with settings 
 
-        --WARNING filling table for testing purposes
-        local testEntry = {}
-        playerIcons[displayName] = testEntry
-        -- END WARNING 
-
-        if playerIcons[displayName] then 
-            local offset = SV.offset
-            for j = 1, 3 do 
-                if playerIcons[displayName][j] then 
+        --if playerIcons[displayName] then 
+        --    local offset = SV.offset
+         --   for j = 1, 3 do 
+          --      if playerIcons[displayName][j] then 
                     
                     -- CalculateIconScreenData(unit, data) 
                     -- offset = offset + size + margin
                     -- update other properties 
-                end
-            end
-        end   
+           --     end
+           -- end
+        --end   
         
+        if positionIcons[cZone] then 
+            UpdateIcon(positionIcons[cZone].coord, positionIcons[cZone].ctrl)
+        end
         -- TODO add position icons 
         -- TODO add icons for pets and companions 
     end
     
     -- sort draw order
-    if ztotal > 1 then
+    if zTotal > 1 then
         local keys = { }
-        for k in pairs( zorder ) do
+        for k in pairs( zOrder ) do
             table.insert( keys, k )
         end
         table.sort( keys )
 
         -- adjust draw order
         for _, k in ipairs( keys ) do
-            zorder[k].ctrl:SetDrawLevel( ztotal )
-            ztotal = ztotal - 1
+            zOrder[k]:SetDrawLevel( zTotal )
+            zTotal = zTotal - 1
         end
     end
 
@@ -335,6 +337,13 @@ end
 function LFI.OverwriteIdentifierData(displayName, value, overwrite, termination) 
 
 end
+
+
+function LFI.RegisterPositionIcon(zone, coord) 
+    positionIconVault[zone] = coord
+    positionIcons[zone] = {coord = coord, ctrl = AssignControl(catPos)}
+end
+
 --TODO add temporary overwrite, meaning the current icon gets stored and re-enabled when the "new one" gets removed again
 
 -- data:    -- texture (string or callback)  first param time, second unitTag, third custom (must be provided as callback)
@@ -387,8 +396,6 @@ local function DefineMenu()
     }
     local optionsTable = {} 
 
-    --TODO add describtions and maybe support for multiple languages? 
-    --table.insert(optionsTable, Lib.FeedbackSubmenu(idLFI, "info3599-LibFloatingIcons.html"))
     table.insert(optionsTable, {type="header", name="Performance"})
     table.insert(optionsTable, DefineSetting("slider", "Update Interval", SV, "interval", {0,100,10}, true))
     table.insert(optionsTable, {type = "header", name="Visual"})
@@ -398,13 +405,12 @@ local function DefineMenu()
     table.insert(optionsTable, DefineSetting("slider", "Fade Distance", SV, "fadedist", {0,1,0.1}))
     table.insert(optionsTable, DefineSetting("slider", "Alpha-MaxValue", SV, "alpha", {0,1,0.1}))
     table.insert(optionsTable, {type="divider"})
-    table.insert(optionsTable, DefineSetting("checkbox", "Debug", SV, "debug"))
+    table.insert(optionsTable, DefineSetting("checkbox", "Debug Mode", SV, "debug"))
+    table.insert(optionsTable, DefineSetting("checkbox", "Developer Mode", SV, "dev"))
 
     LAM2:RegisterAddonPanel('LFI_Menu', panelData)
     LAM2:RegisterOptionControls('LFI_Menu', optionsTable)
 end 
-
--- Setting for max Distance for Render 
 
 -- allow for animated unique icons --> understand animations --> 
 
@@ -433,7 +439,7 @@ local function Initialize()
     -- register update on first player activated event
     EM:RegisterForEvent(idLFI, EVENT_PLAYER_ACTIVATED, function() 
             EM:UnregisterForEvent(idLFI, EVENT_PLAYER_ACTIVATED)
-            --EM:RegisterForUpdate(idLFI, SV.interval, OnUpdate)
+            EM:RegisterForUpdate(idLFI, SV.interval, OnUpdate)
             EM:RegisterForEvent(idLFI, EVENT_PLAYER_ACTIVATED, OnPlayerActivated)
         end)
 
@@ -483,17 +489,19 @@ end
 EM:RegisterForEvent(idLFI, EVENT_ADD_ON_LOADED, OnAddonLoaded)
 
 
---[[ ----------- ]]
---[[ -- Debug -- ]]
---[[ ----------- ]]
+--[[ ------------------- ]]
+--[[ -- Chat Commands -- ]]
+--[[ ------------------- ]]
 
 function LFI.PrintPosition()
     local zone, wX, wY, wZ = GetUnitRawWorldPosition("player")
-    d( zo_strformat("LFI: {x;y;z}={<<2>>;<<3>>;<<4>>} zone:<<1>>", zone, wX, wY, wZ) )
+    d( zo_strformat("LFI: {x;y;z}={<<2>>;<<3>>;<<4>>}; zone:<<1>>", zone, wX, wY, wZ) )
 end
 
 SLASH_COMMANDS["/lfi"] = function()
-        d(cZone)       
+        LFI.PrintPosition()   
+        local zone, wX, wY, wZ = GetUnitRawWorldPosition("player")
+        LFI.RegisterPositionIcon(zone, {x=wX, y=wY, z=wZ})    
     end
 
 --[[ Ideas ]]
