@@ -247,12 +247,11 @@ local function OnUpdate()
            --     end
            -- end
         --end   
-        
-        if positionIcons[cZone] then 
-            UpdateIcon(positionIcons[cZone].coord, positionIcons[cZone].ctrl)
-        end
-        -- TODO add position icons 
-        -- TODO add icons for pets and companions 
+    end
+
+    if positionIcons[cZone] then 
+        UpdateIcon(positionIcons[cZone].coord, positionIcons[cZone].ctrl)
+        if SV.dev then Debug("test") end
     end
     
     -- sort draw order
@@ -439,7 +438,7 @@ local function Initialize()
     -- register update on first player activated event
     EM:RegisterForEvent(idLFI, EVENT_PLAYER_ACTIVATED, function() 
             EM:UnregisterForEvent(idLFI, EVENT_PLAYER_ACTIVATED)
-            EM:RegisterForUpdate(idLFI, SV.interval, OnUpdate)
+            EM:RegisterForUpdate(idLFI, SV.dev and 10000 or SV.interval, OnUpdate)
             EM:RegisterForEvent(idLFI, EVENT_PLAYER_ACTIVATED, OnPlayerActivated)
         end)
 
