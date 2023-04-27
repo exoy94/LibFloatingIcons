@@ -54,6 +54,11 @@ local petIcons = {} --including companions, assistant etc. ????
 local positionIcons = {} 
 local positionIconVault = {}
 
+-- development
+local dev = {
+    interval = 10
+}
+
 --[[ ----------------]]
 --[[ -- Utilities -- ]]
 --[[ --------------- ]]
@@ -405,7 +410,7 @@ local function DefineMenu()
     table.insert(optionsTable, DefineSetting("slider", "Alpha-MaxValue", SV, "alpha", {0,1,0.1}))
     table.insert(optionsTable, {type="divider"})
     table.insert(optionsTable, DefineSetting("checkbox", "Debug Mode", SV, "debug"))
-    table.insert(optionsTable, DefineSetting("checkbox", "Developer Mode", SV, "dev"))
+    --table.insert(optionsTable, DefineSetting("checkbox", "Developer Mode", SV, "dev"))
 
     LAM2:RegisterAddonPanel('LFI_Menu', panelData)
     LAM2:RegisterOptionControls('LFI_Menu', optionsTable)
@@ -438,7 +443,7 @@ local function Initialize()
     -- register update on first player activated event
     EM:RegisterForEvent(idLFI, EVENT_PLAYER_ACTIVATED, function() 
             EM:UnregisterForEvent(idLFI, EVENT_PLAYER_ACTIVATED)
-            EM:RegisterForUpdate(idLFI, SV.dev and 10000 or SV.interval, OnUpdate)
+            EM:RegisterForUpdate(idLFI, SV.dev and dev.interval*1000 or SV.interval, OnUpdate)
             EM:RegisterForEvent(idLFI, EVENT_PLAYER_ACTIVATED, OnPlayerActivated)
         end)
 
@@ -488,20 +493,46 @@ end
 EM:RegisterForEvent(idLFI, EVENT_ADD_ON_LOADED, OnAddonLoaded)
 
 
---[[ ------------------- ]]
---[[ -- Chat Commands -- ]]
---[[ ------------------- ]]
+--[[ ----------------- ]]
+--[[ -- Development -- ]]
+--[[ ----------------- ]]
 
 function LFI.PrintPosition()
     local zone, wX, wY, wZ = GetUnitRawWorldPosition("player")
     d( zo_strformat("LFI: {x;y;z}={<<2>>;<<3>>;<<4>>}; zone:<<1>>", zone, wX, wY, wZ) )
 end
 
-SLASH_COMMANDS["/lfi"] = function()
+SLASH_COMMANDS["/lfi_pos"] = function()
         LFI.PrintPosition()   
         local zone, wX, wY, wZ = GetUnitRawWorldPosition("player")
         LFI.RegisterPositionIcon(zone, {x=wX, y=wY, z=wZ})    
     end
+
+SLASH_COMMANDS["/lfi"] = function(parStr) 
+
+    -- seperate command from parameter
+    parStr = string.lower(parStr)
+    local par={}
+    for str in string.gmatch(parStr, "%S+") do
+        table.insert(par, str)
+    end
+
+    local cmd = {
+        ["dev"] = function() 
+            SV.dev = not SV.dev 
+            
+        end 
+        ["interval"] = function(int) dev.interval = int*1000 end
+    }    
+
+    if not cmd[par[1]] then 
+        return 
+    end
+
+    local func = cmd[par[1]]
+    if type(func) == "function" then func(par[2]) end 
+
+end
 
 --[[ Ideas ]]
 --[[
