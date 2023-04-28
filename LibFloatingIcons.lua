@@ -157,9 +157,8 @@ end
 --[[ ------------ ]]
 
 
-
 local function OnUpdate()   
-    d(GetGameTimeMilliseconds())
+    DevDevug("update executed at "..tostring(GetGameTimeMilliseconds()))
     --TODO early out, check if any icons need to be rendered
 
     local t = GetGameTimeMilliseconds() 
@@ -360,11 +359,16 @@ function LFI.OverwriteIdentifierData(displayName, value, overwrite, termination)
 end
 
 
-function LFI.RegisterPositionIcon(zone, coord) 
+function LFI.RegisterPositionIcon(zone, id, coord) 
+    DevDebug(zo_strformat("register position icon ><<2>>< in [<<1>>]", zone, id))
     positionIconVault[zone] = coord
-    positionIcons[zone] = {coord = coord, ctrl = AssignControl(catPos)}
+    positionIcons[zone] = {id = id, coord = coord, ctrl = AssignControl(catPos)}
 end
 
+
+function LFI.UnregisterPositionIcon(zone, id)
+    DevDebug(zo_strformat("unregister position icon ><<2>>< in [<<1>>]", zone, id))
+end
 --TODO add temporary overwrite, meaning the current icon gets stored and re-enabled when the "new one" gets removed again
 
 -- data:    -- texture (string or callback)  first param time, second unitTag, third custom (must be provided as callback)
@@ -558,6 +562,37 @@ local devCmd = {
             end
         end
     end, 
+    ["cache"] = function() 
+        if not SV.dev then return end
+        local out = ""
+        for i=1,numCat do 
+            out = out..tostring(cacheHandler[i])
+            if i ~= numCat then out=out.."," end
+        end
+        DevDebug("cache {"..out.."}")
+    end, 
+    ["pool"] = function() 
+        if not SV.dev then return end
+        local out = ""
+        for i=1,numCat do 
+            out = out..tostring(poolHandler[i])
+            if i ~= numCat then out=out.."," end
+        end
+        DevDebug("pool {"..out.."}")
+    end, 
+    ["pos"] = function(par) 
+        if not SV.dev then return end
+        -- list all position icons for current zone
+        if par == "here" then 
+        
+        -- list all position icons for specific zone
+        elseif type(par) == "number" then 
+
+        -- list number of position icons for all zones
+        else 
+
+        end
+    end
 }
 
 
