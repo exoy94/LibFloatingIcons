@@ -131,7 +131,7 @@ local function AssignControl(cat)
     if poolHandler[cat] > 0 then 
         local ctrl = controlPool[cat][poolHandler[cat]]
         table.remove(controlPool[cat])
-        poolHandler[cat] = poolHanlder[cat] - 1
+        poolHandler[cat] = poolHandler[cat] - 1
         ctrl:SetHidden(false) 
         return ctrl 
     else 
@@ -250,9 +250,9 @@ local function OnUpdate()
         end
     end
 
-    if positionIcons[cZone] then 
+    for _,icon in ipairs(positionIcons) do 
         DevDebug("updating position icons in ["..cZone.."]" )
-        UpdateIcon(positionIcons[cZone].coord, positionIcons[cZone].ctrl)
+        UpdateIcon(icon.coord, icon.ctrl)
     end
     
     -- sort draw order
@@ -316,6 +316,15 @@ local function HasNecessaryParamter(id, displayName, data)
     return true
 end
 
+local function IsUniquePositionIcon(t, id)
+    for _,v in pairs(t) do 
+        if v.id == id then 
+            return false 
+        end
+    end
+    return true
+end
+
 --[[ ----------------------- ]]
 --[[ -- Exposed Functions -- ]]
 --[[ ----------------------- ]]
@@ -351,17 +360,33 @@ function LFI.OverwriteIdentifierData(displayName, value, overwrite, termination)
 end
 
 
-function LFI.RegisterPositionIcon(zone, id, coord) 
+function LFI.RegisterPositionIcon(zone, id, coord)
+    id = string.lower(id)
+    
+    -- create zone subtable if non existing
+    if type(positionIconVault[zone]) ~= "table" then 
+        positionIconVault[zone] = {}
+    end
+
+    -- return false if icon id is already used for this zone
+    if not IsUniquePositionIcon(positionIconVault[zone], id) then 
+        DevDebug("position icon >"..id.."< already exist in ["..tostring(zone).."]")
+        return false 
+    end
+
+    table.insert(positionIconVault[zone], {id=id, coord=coord})
     DevDebug(zo_strformat("register position icon ><<2>>< in [<<1>>]", zone, id))
-    --positionIconVault[zone] = coord
-    local ctrl = AssignControl(catPos)
-    positionIcons[zone] = {id = id, coord = coord, ctrl = ctrl}
-    LFI.testVar = ctrl
+
+    -- add icon to currently displayed icons if already in the correct zone
+    if zone == cZone then 
+        table.insert(positionIcons, {id=id, coord=coord, ctrl=AssignControl(catPos)})
+    end
 
 end
 
 
 function LFI.UnregisterPositionIcon(zone, id)
+    id = string.lower(id)
     DevDebug(zo_strformat("unregister position icon ><<2>>< in [<<1>>]", zone, id))
 end
 --TODO add temporary overwrite, meaning the current icon gets stored and re-enabled when the "new one" gets removed again
@@ -442,7 +467,23 @@ local function OnPlayerActivated()
     local zoneId = GetZoneId(GetUnitZoneIndex("player"))
     if zoneId ~= cZone then 
         Debug( zo_strformat("zone change detected [<<1>> -> <<2>>]",cZone, zoneId) )
+        -- release all position icons in old zone
+        for _, icon in ipairs(positionIcons) do 
+            ReleaseControl(icon.ctrl) 
+        end
+
+        -- reset position icon table and change zone variable
+        positionIcons = {}
         cZone = zoneId
+
+        -- add position icons from vault to current zone
+        if not positionIconVault[cZone] then return end
+        for _, icon in ipairs(positionIconVault[cZone]) do 
+            local entry = ZO_ShallowTableCopy(icon) 
+            entry.ctrl = AssignControl(catPos)
+            table.insert(positionIcons, entry)
+        end
+
     end
 end
 
@@ -588,9 +629,10 @@ local devCmd = {
 
         end
     end, 
-    ["here"] = function()
+    ["here"] = function(par)
+        if not par then par = "LFI_Here" end
         local zone, wX, wY, wZ = GetUnitRawWorldPosition("player") 
-        LFI.RegisterPositionIcon(zone, "LFI_Test_Here", {x = wX, y=wY, z=wZ})
+        LFI.RegisterPositionIcon(zone, par, {x = wX, y=wY, z=wZ})
     end, 
 }
 
