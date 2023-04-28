@@ -36,6 +36,7 @@ local defaultSV = {
 -- addon variables 
 local idLFI = "LibFloatingIcons"
 local vLFI = 0
+local uLFI 
 
 -- categories 
 local catId = 1
@@ -54,10 +55,6 @@ local petIcons = {} --including companions, assistant etc. ????
 local positionIcons = {} 
 local positionIconVault = {}
 
--- development
-local dev = {
-    interval = 10
-}
 
 --[[ ----------------]]
 --[[ -- Utilities -- ]]
@@ -65,7 +62,13 @@ local dev = {
 
 local function Debug(str) 
     if SV.debug then 
-        d( "LFI: "..str) 
+        d( "[|c00FFFFLFI-Debug|r] "..str) 
+    end
+end
+
+local function DevDebug(str) 
+    if SV.dev then 
+        d( "[|c00FFFFLFI-Dev|r] "..str) 
     end
 end
 
@@ -153,8 +156,10 @@ end
 --[[ -- Update -- ]]
 --[[ ------------ ]]
 
-local function OnUpdate()   
 
+
+local function OnUpdate()   
+    d(GetGameTimeMilliseconds())
     --TODO early out, check if any icons need to be rendered
 
     local t = GetGameTimeMilliseconds() 
@@ -277,7 +282,18 @@ local function OnUpdate()
 end
 
 
-
+local function DefineUpdateInterval(interval) 
+    if uLFI then 
+        EM:UnregisterForUpdate(idLFI) 
+        uLFI = nil
+    end 
+    if not interval then 
+        DevDebug("update stopped")    
+        return 
+    end
+    uLFI = EM:RegisterForUpdate(idLFI, interval, OnUpdate)
+    DevDebug("update running every "..tostring(interval).."ms") 
+end
 
 --[[ --------------------------- ]]
 --[[ ---- Support Functions ---- ]]
@@ -443,7 +459,11 @@ local function Initialize()
     -- register update on first player activated event
     EM:RegisterForEvent(idLFI, EVENT_PLAYER_ACTIVATED, function() 
             EM:UnregisterForEvent(idLFI, EVENT_PLAYER_ACTIVATED)
-            EM:RegisterForUpdate(idLFI, SV.dev and dev.interval*1000 or SV.interval, OnUpdate)
+
+            if not SV.dev then
+                DefineUpdateInterval(SV.interval) 
+            end
+
             EM:RegisterForEvent(idLFI, EVENT_PLAYER_ACTIVATED, OnPlayerActivated)
         end)
 
@@ -497,40 +517,60 @@ EM:RegisterForEvent(idLFI, EVENT_ADD_ON_LOADED, OnAddonLoaded)
 --[[ -- Development -- ]]
 --[[ ----------------- ]]
 
-function LFI.PrintPosition()
-    local zone, wX, wY, wZ = GetUnitRawWorldPosition("player")
-    d( zo_strformat("LFI: {x;y;z}={<<2>>;<<3>>;<<4>>}; zone:<<1>>", zone, wX, wY, wZ) )
-end
+local devCmd = {
+    ["dev"] = function(par)  
+        
+        -- check if requested state is already set
+        if par == "on" and SV.dev then par = nil end 
+        if par == "off" and not SV.dev then par = nil end 
 
-SLASH_COMMANDS["/lfi_pos"] = function()
-        LFI.PrintPosition()   
+        -- activating development mode
+        if par == "on" then
+            d(zo_strformat("[|c00FFFFLFI|r]: DevMode got |c00FF00activated|r")) 
+            SV.dev = true
+            DefineUpdateInterval() 
+
+        -- deactivating development mode
+        elseif par == "off" then 
+            DefineUpdateInterval(SV.interval)
+            SV.dev = false
+            d(zo_strformat("[|c00FFFFLFI|r]: DevMode got |cFF0000deactived|r" ))
+            	
+        -- output development mode status
+        else 
+            d(zo_strformat("[|c00FFFFLFI|r]: DevMode is <<1>>", SV.dev and "|c00FF00active|r" or "|cFF0000inactive|r" ))
+            return
+        end
+        
+    end, 
+}
+
+
+SLASH_COMMANDS["/lfi"] = function(argStr) 
+
+    -- display current player position, if no argument is provided
+    if argStr == "" then 
         local zone, wX, wY, wZ = GetUnitRawWorldPosition("player")
-        LFI.RegisterPositionIcon(zone, {x=wX, y=wY, z=wZ})    
+        d( zo_strformat("[|c00FFFFLFI|r] {x;y;z}={<<2>>;<<3>>;<<4>>}; zone=<<1>>", zone, wX, wY, wZ) )
+        return
     end
-
-SLASH_COMMANDS["/lfi"] = function(parStr) 
 
     -- seperate command from parameter
-    parStr = string.lower(parStr)
-    local par={}
-    for str in string.gmatch(parStr, "%S+") do
-        table.insert(par, str)
+    argStr = string.lower(argStr)
+    local arg={}
+    for str in string.gmatch(argStr, "%S+") do
+        table.insert(arg, str)
     end
 
-    local cmd = {
-        ["dev"] = function() 
-            SV.dev = not SV.dev 
-            
-        end 
-        ["interval"] = function(int) dev.interval = int*1000 end
-    }    
+    local cmd = arg[1]
+    local par = arg[2]
 
-    if not cmd[par[1]] then 
-        return 
-    end
+    -- check if command exists
+    if not devCmd[cmd] then return end
 
-    local func = cmd[par[1]]
-    if type(func) == "function" then func(par[2]) end 
+    -- call command and provide parameter
+    local func = devCmd[cmd]
+    if type(func) == "function" then func(par) end 
 
 end
 
