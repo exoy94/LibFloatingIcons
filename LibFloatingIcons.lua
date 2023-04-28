@@ -96,8 +96,8 @@ local function CreateNewControl(cat)
     local name = string.format("%s_%s_%d_%d", idLFI, "Ctrl", cat, cacheHandler[cat])
     local ctrl = WM:CreateControl( name, Window, CT_CONTROL) 
 
-    --ctrl:ClearAnchors()
-    --ctrl:SetAnchor( CENTER, Window, CENTER, 0, 0)
+    ctrl:ClearAnchors()
+    ctrl:SetAnchor( CENTER, Window, CENTER, 0, 0)
     ctrl:SetHidden(false) 
 
     ctrl.cat = cat 
@@ -107,15 +107,13 @@ local function CreateNewControl(cat)
         local tex = WM:CreateControl( name.."_Texture", ctrl, CT_TEXTURE)
         tex:ClearAnchors()
         tex:SetAnchor( CENTER, ctrl, CENTER, 0, 0)
-        tex:SetTexture( "OdySupportIcons/icons/arrow.dds" )
+        tex:SetTexture( GetAbilityIcon(112323) )
         tex:SetDimensions(50,50)
         return tex
     end
 
     -- add different controls depending on category 
-    if cat == catPos then 
-
-    elseif cat == catId then 
+    if cat == catId then 
         ctrl.tex = AddTexture()
     elseif cat == catBuff then 
 
@@ -158,7 +156,7 @@ end
 
 
 local function OnUpdate()   
-    DevDevug("update executed at "..tostring(GetGameTimeMilliseconds()))
+    DevDebug("update executed at "..tostring(GetGameTimeMilliseconds()))
     --TODO early out, check if any icons need to be rendered
 
     local t = GetGameTimeMilliseconds() 
@@ -230,29 +228,30 @@ local function OnUpdate()
         return true
     end
 
+    if IsUnitGrouped("player") then 
+        for i = 1, GROUP_SIZE_MAX do 
+            local unit = "group"..i
+            local displayName = GetUnitDisplayName(unit) 
+            
+            DevDebug("updating icons for ["..displayName.."]")
+            --TODO check if unit is player and compare with settings 
 
-    for i = 1, GROUP_SIZE_MAX do 
-        local unit = "group"..i
-        local displayName = GetUnitDisplayName(unit) 
-        
-        DevDebug("updating icons for "..displayName)
-        --TODO check if unit is player and compare with settings 
-
-        --if playerIcons[displayName] then 
-        --    local offset = SV.offset
-         --   for j = 1, 3 do 
-          --      if playerIcons[displayName][j] then 
-                    
-                    -- CalculateIconScreenData(unit, data) 
-                    -- offset = offset + size + margin
-                    -- update other properties 
-           --     end
-           -- end
-        --end   
+            --if playerIcons[displayName] then 
+            --    local offset = SV.offset
+            --   for j = 1, 3 do 
+            --      if playerIcons[displayName][j] then 
+                        
+                        -- CalculateIconScreenData(unit, data) 
+                        -- offset = offset + size + margin
+                        -- update other properties 
+            --     end
+            -- end
+            --end   
+        end
     end
 
     if positionIcons[cZone] then 
-        
+        DevDebug("updating position icons in ["..cZone.."]" )
         UpdateIcon(positionIcons[cZone].coord, positionIcons[cZone].ctrl)
     end
     
@@ -354,8 +353,11 @@ end
 
 function LFI.RegisterPositionIcon(zone, id, coord) 
     DevDebug(zo_strformat("register position icon ><<2>>< in [<<1>>]", zone, id))
-    positionIconVault[zone] = coord
-    positionIcons[zone] = {id = id, coord = coord, ctrl = AssignControl(catPos)}
+    --positionIconVault[zone] = coord
+    local ctrl = AssignControl(catPos)
+    positionIcons[zone] = {id = id, coord = coord, ctrl = ctrl}
+    LFI.testVar = ctrl
+
 end
 
 
@@ -577,7 +579,7 @@ local devCmd = {
         if not SV.dev then return end
         -- list all position icons for current zone
         if par == "here" then 
-        
+            d(positionIcons[cZone])
         -- list all position icons for specific zone
         elseif type(par) == "number" then 
 
@@ -585,7 +587,11 @@ local devCmd = {
         else 
 
         end
-    end
+    end, 
+    ["here"] = function()
+        local zone, wX, wY, wZ = GetUnitRawWorldPosition("player") 
+        LFI.RegisterPositionIcon(zone, "LFI_Test_Here", {x = wX, y=wY, z=wZ})
+    end, 
 }
 
 
