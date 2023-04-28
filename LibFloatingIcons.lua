@@ -291,7 +291,8 @@ local function DefineUpdateInterval(interval)
         DevDebug("update stopped")    
         return 
     end
-    uLFI = EM:RegisterForUpdate(idLFI, interval, OnUpdate)
+    EM:RegisterForUpdate(idLFI, interval, OnUpdate)
+    uLFI = interval
     DevDebug("update running every "..tostring(interval).."ms") 
 end
 
@@ -460,6 +461,7 @@ local function Initialize()
     EM:RegisterForEvent(idLFI, EVENT_PLAYER_ACTIVATED, function() 
             EM:UnregisterForEvent(idLFI, EVENT_PLAYER_ACTIVATED)
 
+            DevDebug("DevMode is |c00FF00active|r")
             if not SV.dev then
                 DefineUpdateInterval(SV.interval) 
             end
@@ -519,29 +521,42 @@ EM:RegisterForEvent(idLFI, EVENT_ADD_ON_LOADED, OnAddonLoaded)
 
 local devCmd = {
     ["dev"] = function(par)  
-        
         -- check if requested state is already set
         if par == "on" and SV.dev then par = nil end 
         if par == "off" and not SV.dev then par = nil end 
-
         -- activating development mode
         if par == "on" then
             d(zo_strformat("[|c00FFFFLFI|r]: DevMode got |c00FF00activated|r")) 
             SV.dev = true
             DefineUpdateInterval() 
-
         -- deactivating development mode
         elseif par == "off" then 
             DefineUpdateInterval(SV.interval)
             SV.dev = false
-            d(zo_strformat("[|c00FFFFLFI|r]: DevMode got |cFF0000deactived|r" ))
-            	
+            d(zo_strformat("[|c00FFFFLFI|r]: DevMode got |cFF0000deactived|r" ))	
         -- output development mode status
         else 
             d(zo_strformat("[|c00FFFFLFI|r]: DevMode is <<1>>", SV.dev and "|c00FF00active|r" or "|cFF0000inactive|r" ))
             return
         end
-        
+    end, 
+    ["interval"] = function(par) 
+        if not SV.dev then return end 
+        if not par then 
+            if uLFI then 
+                DevDebug("update running every "..tostring(uLFI).."ms") 
+            else 
+                DevDebug("update not running")  
+            end
+        elseif par == "-1" then 
+            DefineUpdateInterval(SV.interval)    
+        elseif par == "0" then 
+            DefineUpdateInterval() 
+        else 
+            if type(tonumber(par)) == "number" then 
+                DefineUpdateInterval(tonumber(par)*1000)
+            end
+        end
     end, 
 }
 
