@@ -186,14 +186,6 @@ local function OnUpdate()
     local i41 = -( uZ * fY * cX + uY * fX * cZ + uX * fZ * cY - uX * fY * cZ - uY * fZ * cX - uZ * fX * cY )
     local i42 = -( rX * fY * cZ + rY * fZ * cX + rZ * fX * cY - rZ * fY * cX - rY * fX * cZ - rX * fZ * cY )
     local i43 = -( rZ * uY * cX + rY * uX * cZ + rX * uZ * cY - rX * uY * cZ - rY * uZ * cX - rZ * uX * cY )
-
-    local function GetPosition(pos) 
-        local x,y,z 
-        --if Lib.IsString(pos) then  _, x,y,z = GetUnitWorldPosition(pos) end
-        --if Lib.IsTable(pos) then x,y,z = pos.x, pos.y, pos.z end
-        --if Lib.IsFunc(pos) then x,y,z = pos( t ) end
-        return x,y,z
-    end
     
     local zOrder = {}
     local zTotal = 0
@@ -243,6 +235,7 @@ local function OnUpdate()
         local unit = "group"..i
         local displayName = GetUnitDisplayName(unit) 
         
+        DevDebug("updating icons for "..displayName)
         --TODO check if unit is player and compare with settings 
 
         --if playerIcons[displayName] then 
@@ -259,8 +252,8 @@ local function OnUpdate()
     end
 
     if positionIcons[cZone] then 
+        
         UpdateIcon(positionIcons[cZone].coord, positionIcons[cZone].ctrl)
-        if SV.dev then Debug("test") end
     end
     
     -- sort draw order
