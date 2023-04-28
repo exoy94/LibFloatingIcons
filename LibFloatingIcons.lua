@@ -157,6 +157,17 @@ end
 
 local function OnUpdate()   
     DevDebug("update executed at "..tostring(GetGameTimeMilliseconds()))
+
+    local earlyOut = true
+    for i=1,numCat do  
+        if poolHandler[i] < cacheHandler[i] then 
+            earlyOut = false 
+        end
+    end
+    if earlyOut then 
+        DevDebug("update aborted")
+        return
+    end
     --TODO early out, check if any icons need to be rendered
 
     local t = GetGameTimeMilliseconds() 
@@ -250,8 +261,8 @@ local function OnUpdate()
         end
     end
 
-    for _,icon in ipairs(positionIcons) do 
-        DevDebug("updating position icons in ["..cZone.."]" )
+    if not ZO_IsTableEmpty(positionIcons) then DevDebug("updating position icons in ["..cZone.."]" ) end
+    for _,icon in ipairs(positionIcons) do   
         UpdateIcon(icon.coord, icon.ctrl)
     end
     
@@ -351,7 +362,7 @@ end
 
 function LFI.HasIdentifierIcon(displayName) 
     local entry = playerIcons[displayName][catId]
-    return not ZO_IsEmptyTable(entry) and ZO_ShallowCopy(entry.meta) or false 
+    return not ZO_IsTableEmpty(entry) and ZO_ShallowCopy(entry.meta) or false 
 end
 
 
