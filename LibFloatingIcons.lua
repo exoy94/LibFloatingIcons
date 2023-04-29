@@ -201,7 +201,9 @@ local function OnUpdate()
 
     local function UpdateIcon(coord, ctrl, data)
         local wX, wY, wZ = coord[1], coord[2], coord[3]
-        wY = wY + 2*100 --offset
+        if ctrl.cat ~= 4 then 
+            wY = wY + 2*100 --offset
+        end
 
         -- calculate unit view position
         local pX = wX * i11 + wY * i21 + wZ * i31 + i41
@@ -316,7 +318,9 @@ end
 --[[ -- Exposed Functions -- ]]
 --[[ ----------------------- ]]
 
-function LFI.RegisterPositionIcon(zone, id, coord)
+-- data: tex, color, size, alpha, 
+
+function LFI.RegisterPositionIcon(zone, id, coord, data)
     id = string.lower(id)
     
     -- create zone subtable if non existing
@@ -330,12 +334,15 @@ function LFI.RegisterPositionIcon(zone, id, coord)
         return false 
     end
 
-    table.insert(positionIconVault[zone], {id=id, coord=coord})
+    local icon = {id = id, coord=coord, data = data}
+
+    table.insert(positionIconVault[zone], icon)
     DevDebug(zo_strformat("register position icon ><<2>>< in [<<1>>]", zone, id))
 
     -- add icon to currently displayed icons if already in the correct zone
     if zone == cZone then 
-        table.insert(positionIcons, {id=id, coord=coord, ctrl=AssignControl(catPos)})
+        icon.ctrl = AssignControl(catPos)
+        table.insert(positionIcons, icon)
     end
 end
 
@@ -633,6 +640,17 @@ SLASH_COMMANDS["/lfi"] = function(argStr)
     if type(func) == "function" then func(par) end 
 
 end
+
+--[[ --------------- ]]
+--[[ -- ToDO List -- ]]
+--[[ --------------- ]]
+
+--[[ Performance ]]
+
+-- Dont use clear anchor (solinur) -> always use same anchor
+-- remove texture from cache (moony) 
+-- logic in update function for callbacks 
+
 
 --[[ Ideas ]]
 --[[
