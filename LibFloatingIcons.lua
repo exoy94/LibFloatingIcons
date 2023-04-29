@@ -102,7 +102,7 @@ local function CreateNewControl(cat)
     local ctrl = WM:CreateControl( name, Window, CT_CONTROL) 
 
     ctrl:ClearAnchors()
-    ctrl:SetAnchor( CENTER, Window, CENTER, 0, 0)
+    ctrl:SetAnchor( BOTTOM, Window, CENTER, 0, 0)
     ctrl:SetHidden(false) 
 
     ctrl.cat = cat 
@@ -114,6 +114,7 @@ local function CreateNewControl(cat)
         icon:SetAnchor( CENTER, ctrl, CENTER, 0, 0)
         icon:SetDimensions(50,50)
         icon:SetTexture( GetAbilityIcon(112323))
+        icon:SetTextureReleaseOption(RELEASE_TEXTURE_AT_ZERO_REFERENCES) 
         return icon
     end
 
@@ -126,7 +127,7 @@ local function CreateNewControl(cat)
 
     -- add different controls depending on category 
     if cat == catId then 
-        ctrl.tex = AddTexture()
+
     elseif cat == catBuff then 
 
     elseif cat == catMech then 
@@ -157,6 +158,7 @@ end
 
 local function ReleaseControl(ctrl)
     ctrl:SetHidden(true) 
+    if ctrl.icon then ctrl.icon:SetTexture(nil) end
     table.insert(controlPool[ctrl.cat], ctrl)
     poolHandler[ctrl.cat] = poolHandler[ctrl.cat] + 1
 end
@@ -244,7 +246,6 @@ local function OnUpdate()
         local fade = SV.alpha * alpha * alpha  
 
         -- apply settings to control 
-        ctrl:ClearAnchors()
         ctrl:SetAnchor(BOTTOM, Window, CENTER, x, y)
         ctrl:SetScale( scale )
         ctrl:SetAlpha( fade )
