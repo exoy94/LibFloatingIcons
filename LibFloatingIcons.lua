@@ -23,8 +23,8 @@ local defaultSV = {
     ["fadedist"] = 1,
     ["scaling"] = true, 
     ["alpha"] = 1,
-    ["maxSize"] = 5,
-    ["standardSize"] = 5, 
+    ["standardSize"] = 40, 
+    ["maxSize"] = 80,
     ["debug"] = false, 
     ["dev"] = false, 
 }
@@ -80,6 +80,10 @@ local function Evaluate(v, ...)
     end
 end   
 
+local function IsFunc(f) 
+    return type(f) == "function" 
+end
+
 
 --[[ --------------------- ]]
 --[[ -- Control Handler -- ]]
@@ -105,9 +109,11 @@ local function CreateNewControl(cat)
     
     -- support functions 
     local function AddIcon() 
-        local tex = WM:CreateControl( name.."_Icon", ctrl, CT_TEXTURE)
+        local icon = WM:CreateControl( name.."_Icon", ctrl, CT_TEXTURE)
         icon:ClearAnchors()
         icon:SetAnchor( CENTER, ctrl, CENTER, 0, 0)
+        icon:SetDimensions(50,50)
+        icon:SetTexture( GetAbilityIcon(112323))
         return icon
     end
 
@@ -257,21 +263,22 @@ local function OnUpdate()
         for i = 1, GROUP_SIZE_MAX do 
             local unit = "group"..i
             local displayName = GetUnitDisplayName(unit) 
-            
-            DevDebug("updating icons for ["..displayName.."]")
-            --TODO check if unit is player and compare with settings 
+            if displayName then 
+                DevDebug("updating icons for ["..displayName.."]")
+                --TODO check if unit is player and compare with settings 
 
-            --if playerIcons[displayName] then 
-            --    local offset = SV.offset
-            --   for j = 1, 3 do 
-            --      if playerIcons[displayName][j] then 
-                        
-                        -- CalculateIconScreenData(unit, data) 
-                        -- offset = offset + size + margin
-                        -- update other properties 
-            --     end
-            -- end
-            --end   
+                --if playerIcons[displayName] then 
+                --    local offset = SV.offset
+                --   for j = 1, 3 do 
+                --      if playerIcons[displayName][j] then 
+                            
+                            -- CalculateIconScreenData(unit, data) 
+                            -- offset = offset + size + margin
+                            -- update other properties 
+                --     end
+                -- end
+                --end   
+            end
         end
     end
 
@@ -405,17 +412,30 @@ end
 --[[ -- Menu -- ]]
 --[[ ---------- ]]
 
-local function DefineSetting(setting, name, tab, var, param, warning)
-    local s = {type=setting, name=name}
-        s.getFunc = function() return tab[var] end
-        s.setFunc = function(v) tab[var] = v end 
-        if setting == "slider" then  
-            s.min, s.max, s.step, s.decimals = param[1], param[2], param[3], 2
-        end
-        if warning then 
-            s.warning = "Changes require Reloadui"
-        end
-    return s
+--{name, tt, width, warning}
+local menuText = {
+    ["interval"] = {LFI_MENU_INTERVAL, LFI_MENU_INTERVAL_TT, "full", nil},
+    ["standardSize"] = {LFI_MENU_SIZE, LFI_MENU_SIZE_TT, "half", nil},
+    ["maxSize"] = {LFI_MENU_MAXSIZE, LFI_MENU_MAXSIZE_TT, "half", nil},
+    ["fadeout"] = {"fadeout", nil, "half", nil},
+    ["alpha"] = {"alpha", nil, "half", nil}, 
+    ["scaling"] = {"scaling", nil, "half", nil},
+    ["fadedist"] = {"fadedist", nil, "half", nil},
+    ["debug"] = {LFI_MENU_DEBUG, nil, "full", LFI_MENU_DEBUG_WARN},
+}
+
+local function AddOption(setting, var, callback, slider) 
+    local text = menuText[var]
+    local opt = {type=setting, name=text[1], tooltip=text[2], width = text[3], warning = text[4]}
+    opt.getFunc = function() return SV[var] end 
+    opt.setFunc = function(v) 
+        SV[var] = v 
+        if IsFunc(callback) then callback(v) end
+    end 
+    if slider then 
+        opt.min, opt.max, opt.step, opt.decimals = slider[1], slider[2], slider[3], slider[4]
+    end
+    return opt
 end
 
 local function DefineMenu() 
@@ -431,17 +451,61 @@ local function DefineMenu()
     }
     local optionsTable = {} 
 
-    table.insert(optionsTable, {type="header", name="Performance"})
-    table.insert(optionsTable, DefineSetting("slider", "Update Interval", SV, "interval", {0,100,10}, true))
-    table.insert(optionsTable, {type = "header", name="Visual"})
-    table.insert(optionsTable, DefineSetting("slider", "Maximum Size", SV, "maxSize", {1,10,1}))
-    table.insert(optionsTable, DefineSetting("checkbox", "Fadeout", SV, "fadeout"))
-    table.insert(optionsTable, DefineSetting("checkbox", "Distance Scaling", SV, "scaling"))
-    table.insert(optionsTable, DefineSetting("slider", "Fade Distance", SV, "fadedist", {0,1,0.1}))
-    table.insert(optionsTable, DefineSetting("slider", "Alpha-MaxValue", SV, "alpha", {0,1,0.1}))
+    table.insert(optionsTable, {
+        type="button", 
+        name=LFI_MENU_DONATE,
+        tooltip = LFI_MENU_DONATE_TT,
+        func = function() RequestOpenUnsafeURL( "https://www.buymeacoffee.com/exoy" ) end, 
+        width = "half", 
+        warning = LFI_MENU_URL,
+    })
+    table.insert(optionsTable, {
+        type="button", 
+        name=LFI_MENU_ESOUI,
+        func = function() RequestOpenUnsafeURL( "https://www.esoui.com/downloads/info3599-LibFloatingIcons.html" ) end, 
+        width = "half", 
+        warning = LFI_MENU_URL,
+    })
+    table.insert(optionsTable, {
+        type="button", 
+        name=LFI_MENU_MAIL,
+        tooltip=LFI_MENU_MAIL_TT,
+        func = function() 
+            if GetWorldName() == "EU Megaserver" then
+                SCENE_MANAGER:Show('mailSend')
+                zo_callLater(function() 
+                        ZO_MailSendToField:SetText("@Exoy94")
+                        ZO_MailSendSubjectField:SetText( idLFI )
+                        ZO_MailSendBodyField:TakeFocus()   
+                    end, 250)
+            end
+        end, 
+        width = "half", 
+    })
+    table.insert(optionsTable, {
+        type="button", 
+        name=LFI_MENU_DISCORD,
+        func = function() RequestOpenUnsafeURL( "https://discord.gg/MjfPKsJAS9" ) end, 
+        width = "half", 
+        warning = LFI_MENU_URL,
+    })
+
+    table.insert(optionsTable, {type="header", name=LFI_MENU_PERFORMANCE} )
+    table.insert(optionsTable, AddOption("slider", "interval", DefineUpdateInterval, {0,100,5,0}) )
+
+    table.insert(optionsTable, {type = "header", name=LFI_MENU_VISUAL} )
+
+    table.insert(optionsTable, AddOption("slider", "standardSize", nil, {10,150,5,0}) )
+    table.insert(optionsTable, AddOption("slider", "maxSize", nil, {10,150,5,0}) )
+
+    table.insert(optionsTable, AddOption("checkbox", "fadeout"))
+    table.insert(optionsTable, AddOption("slider", "alpha", nil, {0,1,0.1,2}))
+
+    table.insert(optionsTable, AddOption("checkbox", "scaling"))
+    table.insert(optionsTable, AddOption("slider", "fadedist", nil, {0,1,0.1,2}))
+
     table.insert(optionsTable, {type="divider"})
-    table.insert(optionsTable, DefineSetting("checkbox", "Debug Mode", SV, "debug"))
-    --table.insert(optionsTable, DefineSetting("checkbox", "Developer Mode", SV, "dev"))
+    table.insert(optionsTable, AddOption("checkbox", "debug") ) 
 
     LAM2:RegisterAddonPanel('LFI_Menu', panelData)
     LAM2:RegisterOptionControls('LFI_Menu', optionsTable)
