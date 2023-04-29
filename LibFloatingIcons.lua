@@ -94,6 +94,7 @@ local cacheHandler = {} -- keeps track of how many controls of one category exis
 
 local function CreateNewControl(cat) 
     local name = string.format("%s_%s_%d_%d", idLFI, "Ctrl", cat, cacheHandler[cat])
+
     local ctrl = WM:CreateControl( name, Window, CT_CONTROL) 
 
     ctrl:ClearAnchors()
@@ -103,13 +104,18 @@ local function CreateNewControl(cat)
     ctrl.cat = cat 
     
     -- support functions 
-    local function AddTexture() 
-        local tex = WM:CreateControl( name.."_Texture", ctrl, CT_TEXTURE)
-        tex:ClearAnchors()
-        tex:SetAnchor( CENTER, ctrl, CENTER, 0, 0)
-        tex:SetTexture( GetAbilityIcon(112323) )
-        tex:SetDimensions(50,50)
-        return tex
+    local function AddIcon() 
+        local tex = WM:CreateControl( name.."_Icon", ctrl, CT_TEXTURE)
+        icon:ClearAnchors()
+        icon:SetAnchor( CENTER, ctrl, CENTER, 0, 0)
+        return icon
+    end
+
+    local function AddLabel() 
+        local label = WM:CreateControl( name.."_Label", ctrl, CT_LABEL)
+        label:ClearAnchors() 
+        label:SetAnchor(CENTER, ctrl, CENTER, 0, 0)
+        return label
     end
 
     -- add different controls depending on category 
@@ -120,7 +126,8 @@ local function CreateNewControl(cat)
     elseif cat == catMech then 
 
     elseif cat == catPos then 
-        ctrl.tex = AddTexture() 
+        ctrl.icon = AddIcon() 
+        ctrl.label = AddLabel() 
     end
 
     return ctrl 
@@ -236,8 +243,13 @@ local function OnUpdate()
         ctrl:SetScale( scale )
         ctrl:SetAlpha( fade )
 
-        --TODO callbacks for texture, color etc.
+        --TODO callbacks for texture, color etc
+        ctrl.icon:SetTexture( Evaluate(data.icon.tex) )
+        ctrl.icon:SetColor( Evaluate(data.icon.col) )
 
+        ctrl.label:SetText( Evaluate(data.label.text) )
+        ctrl.label:SetFont( Evaluate(data.label.font) )
+        ctrl.label:SetColor( Evaluate(data.label.col) )
         return true
     end
 
@@ -264,8 +276,8 @@ local function OnUpdate()
     end
 
     if not ZO_IsTableEmpty(positionIcons) then DevDebug("updating position icons in ["..cZone.."]" ) end
-    for _,icon in ipairs(positionIcons) do   
-        UpdateIcon({Evaluate(icon.coord.x,t), Evaluate(icon.coord.y,t), Evaluate(icon.coord.z,t)}, icon.ctrl)
+    for _,info in ipairs(positionIcons) do   
+        UpdateIcon({Evaluate(info.coord.x,t), Evaluate(info.coord.y,t), Evaluate(info.coord.z,t)}, info.ctrl, info.data)
     end
     
     -- sort draw order
@@ -318,9 +330,10 @@ end
 --[[ -- Exposed Functions -- ]]
 --[[ ----------------------- ]]
 
--- data: tex, color, size, alpha, 
+-- icon: tex, col, size, alpha
+-- label: text, col, alpha, font
 
-function LFI.RegisterPositionIcon(zone, id, coord, data)
+function LFI.RegisterPositionIcon(zone, id, coord, icon, label)
     id = string.lower(id)
     
     -- create zone subtable if non existing
@@ -334,16 +347,18 @@ function LFI.RegisterPositionIcon(zone, id, coord, data)
         return false 
     end
 
-    local icon = {id = id, coord=coord, data = data}
+    local info = {id=id, coord=coord, data={icon=icon, label=label}}
 
-    table.insert(positionIconVault[zone], icon)
+    table.insert(positionIconVault[zone], info)
     DevDebug(zo_strformat("register position icon ><<2>>< in [<<1>>]", zone, id))
 
     -- add icon to currently displayed icons if already in the correct zone
     if zone == cZone then 
-        icon.ctrl = AssignControl(catPos)
-        table.insert(positionIcons, icon)
+        info.ctrl = AssignControl(catPos)
+        table.insert(positionIcons, info)
     end
+
+
 end
 
 
@@ -444,8 +459,8 @@ local function OnPlayerActivated()
         Debug( zo_strformat("zone update [<<1>> -> <<2>>]",cZone, zoneId) )
 
         -- release all position icons in old zone
-        for _, icon in ipairs(positionIcons) do 
-            ReleaseControl(icon.ctrl) 
+        for _, info in ipairs(positionIcons) do 
+            ReleaseControl(info.ctrl) 
         end
 
         -- reset position icon table and change zone variable
@@ -454,8 +469,8 @@ local function OnPlayerActivated()
 
         -- add position icons from vault to current zone
         if not positionIconVault[cZone] then return end
-        for _, icon in ipairs(positionIconVault[cZone]) do 
-            local entry = ZO_ShallowTableCopy(icon) 
+        for _, info in ipairs(positionIconVault[cZone]) do 
+            local entry = ZO_ShallowTableCopy(info) 
             entry.ctrl = AssignControl(catPos)
             table.insert(positionIcons, entry)
         end
