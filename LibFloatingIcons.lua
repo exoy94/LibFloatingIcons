@@ -303,30 +303,6 @@ end
 --[[ -- for Exposed Framework -- ]]
 --[[ --------------------------- ]]
 
-local function VerifyHashTable(t, e) 
-    if not type(t) == "table" then return false end 
-    for _,ev in ipairs(e) do 
-      if not t[ev] then return false end
-    end
-    return true
-end
-
-local function FormatData(i)
-    local r = {}
-    r.tex =     type(i.tex) == "function"   and i.tex   or function() return i.tex end
-    r.col =     type(i.col) =="table"       and i.col   or {1,1,1,1}
-    r.size =    type(i.size)=="number"      and i.size  or SV.standardSize
-    return r 
-end
-
-local function HasNecessaryParamter(id, displayName, data) 
-    if not id then return false end
-    if not type(displayName) == "string" then return false end 
-    if not string.find(displayName, "@") then return false end
-    if not VerifyHashTable(data, {tex}) then return false end 
-    return true
-end
-
 local function FindPositionIcon(t, id)
     for k,v in pairs(t) do 
         if v.id == id then 
@@ -339,37 +315,6 @@ end
 --[[ ----------------------- ]]
 --[[ -- Exposed Functions -- ]]
 --[[ ----------------------- ]]
-
-function LFI.RegisterIdentifierIcon(displayName, data, meta) 
-
-    if not playerIcons[displayName] then 
-        playerIcons[displayName] = {catId = {}, catBuff = {}, catMech = {} }
-    end
-
-    playerIcons[displayName][catId] = {
-        icon = AssignIcon(),
-        data = data, 
-        meta = meta, 
-    }
-
-end
-
-
-function LFI.UnregisterIdentifierIcon(displayName) 
-    playerIcons[displayName][catId] = {}
-end
-
-
-function LFI.HasIdentifierIcon(displayName) 
-    local entry = playerIcons[displayName][catId]
-    return not ZO_IsTableEmpty(entry) and ZO_ShallowCopy(entry.meta) or false 
-end
-
-
-function LFI.OverwriteIdentifierData(displayName, value, overwrite, termination) 
-
-end
-
 
 function LFI.RegisterPositionIcon(zone, id, coord)
     id = string.lower(id)
@@ -411,7 +356,6 @@ function LFI.UnregisterPositionIcon(zone, id)
         table.remove(positionIcons, k2)
     end
     DevDebug(zo_strformat("unregister position icon ><<2>>< in [<<1>>]", zone, id))
-
 end
 --TODO add temporary overwrite, meaning the current icon gets stored and re-enabled when the "new one" gets removed again
 
