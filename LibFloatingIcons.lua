@@ -105,7 +105,9 @@ local function ApplyStaticProperty(control,cmd,var)
     if cmd == "color" then control:SetColor(var[1], var[2], var[3],1)
     elseif cmd == "texture" then control:SetTexture(var) 
     elseif cmd == "alpha" then control:SetAlpha(var)
-    elseif cmd == "size" then control:SetDimensions(var, var)
+    elseif cmd == "size" then 
+        local size = zo_min(var, SV.maxSize)
+        control:SetDimensions(size, size)
     elseif cmd == "desaturation" then control:SetDesaturation(var)
     end
 end
@@ -206,8 +208,8 @@ end
 
 
 local function OnUpdate()   
-    DevDebug("update executed at "..tostring(GetGameTimeMilliseconds()))
 
+    DevDebug("update executed at "..tostring(GetGameTimeMilliseconds()))
     local earlyOut = true
     for i=1,numCat do  
         if poolHandler[i] < cacheHandler[i] then 
@@ -215,10 +217,9 @@ local function OnUpdate()
         end
     end
     if earlyOut then 
-        DevDebug("update aborted")
+        DevDebug("update early out")
         return
     end
-    --TODO early out, check if any icons need to be rendered
 
     local t = GetGameTimeMilliseconds() 
     -- screen dimensions
@@ -295,18 +296,13 @@ local function OnUpdate()
             end
             if cb.size then 
                 local size = Evaluate(data.icon.size, t)
+                size = zo_min(size, SV.maxSize)
                 ctrl.icon:SetDimensions( size, size )
             end
             if cb.desaturation then 
                 ctrl.icon:SetDesaturation( Evaluate(data.icon.desaturation) )
             end
         end
-
-        --ctrl.icon:SetColor( Evaluate(data.icon.col) )
-
-        --ctrl.label:SetText( Evaluate(data.label.text) )
-        --ctrl.label:SetFont( Evaluate(data.label.font) )
-        --ctrl.label:SetColor( Evaluate(data.label.col) )
     end
 
     if IsUnitGrouped("player") then 
@@ -394,7 +390,7 @@ end
 
 --[[ -- Position Icons ]]
 
-function LFI.RegisterPositionIcon(zone, id, coord, icon, label)
+function LFI.RegisterPositionIcon(id, zone, coord, icon, label)
     local earlyOut = true 
     if icon then 
         if icon.texture then earlyOut = false end 
@@ -439,7 +435,6 @@ function LFI.RegisterPositionIcon(zone, id, coord, icon, label)
     end
 end
 
-
 function LFI.UnregisterPositionIcon(zone, id)
     id = string.lower(id)
     local k1 = FindPositionIcon(positionIconVault[zone], id)
@@ -457,6 +452,7 @@ function LFI.UnregisterPositionIcon(zone, id)
     end
     DevDebug(zo_strformat("unregister position icon ><<2>>< in [<<1>>]", zone, id))
 end
+
 --TODO add temporary overwrite, meaning the current icon gets stored and re-enabled when the "new one" gets removed again
 
 -- data:    -- texture (string or callback)  first param time, second unitTag, third custom (must be provided as callback)
@@ -486,8 +482,8 @@ end
 --{name, tt, width, warning}
 local menuText = {
     ["interval"] = {LFI_MENU_INTERVAL, LFI_MENU_INTERVAL_TT, "full", nil},
-    ["standardSize"] = {LFI_MENU_SIZE, LFI_MENU_SIZE_TT, "half", nil},
-    ["maxSize"] = {LFI_MENU_MAXSIZE, LFI_MENU_MAXSIZE_TT, "half", nil},
+    ["standardSize"] = {LFI_MENU_SIZE, LFI_MENU_SIZE_TT, "half", LFI_MENU_WARNING_RETRO},
+    ["maxSize"] = {LFI_MENU_MAXSIZE, LFI_MENU_MAXSIZE_TT, "half", LFI_MENU_WARNING_RETRO},
     ["fadeout"] = {"fadeout", nil, "half", nil},
     ["alpha"] = {"alpha", nil, "half", nil}, 
     ["scaling"] = {"scaling", nil, "half", nil},
@@ -755,11 +751,6 @@ local devCmd = {
 
         end
     end, 
-    ["here"] = function(par)
-        if not par then par = "LFI_Here" end
-        local zone, wX, wY, wZ = GetUnitRawWorldPosition("player") 
-        LFI.RegisterPositionIcon(zone, par, {x = wX, y=wY, z=wZ})
-    end, 
 }
 
 
@@ -794,12 +785,6 @@ end
 --[[ --------------- ]]
 --[[ -- ToDO List -- ]]
 --[[ --------------- ]]
-
---[[ Performance ]]
-
--- Dont use clear anchor (solinur) -> always use same anchor
--- remove texture from cache (moony) 
--- logic in update function for callbacks 
 
 
 --[[ Ideas ]]
