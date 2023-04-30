@@ -109,6 +109,8 @@ local function ApplyStaticProperty(control,cmd,var)
         local size = zo_min(var, SV.maxSize)
         control:SetDimensions(size, size)
     elseif cmd == "desaturation" then control:SetDesaturation(var)
+    elseif cmd == "font" then control:SetFont(var) 
+    elseif cmd == "text" then control:SetText(var)
     end
 end
 
@@ -156,6 +158,9 @@ local function CreateNewControl(cat)
         local label = WM:CreateControl( name.."_Label", ctrl, CT_LABEL)
         label:ClearAnchors() 
         label:SetAnchor(CENTER, ctrl, CENTER, 0, 0)
+        label:SetVerticalAlignment( TEXT_ALIGN_CENTER )
+        label:SetHorizontalAlignment( TEXT_ALIGN_CENTER )
+        label:SetFont("ZoFontWinH1")
         return label
     end
 
@@ -303,6 +308,22 @@ local function OnUpdate()
                 ctrl.icon:SetDesaturation( Evaluate(data.icon.desaturation) )
             end
         end
+        local cb = ctrl.callbacks.label
+        if not ZO_IsTableEmpty(cb) then 
+            if cb.text then ctrl.label:SetText( Evaluate(data.label.text,t) ) end
+            if cb.color then 
+                local color = Evaluate(data.label.color, t)
+                ctrl.label:SetColor( color[1], color[2], color[3] ) 
+            end
+            if cb.size then 
+                local size = Evaluate(data.label.size, t)
+                size = zo_min(size, SV.maxSize)
+                ctrl.label:SetDimensions( size, size )
+            end
+            if cb.desaturation then 
+                ctrl.label:SetDesaturation( Evaluate(data.label.desaturation) )
+            end
+        end
     end
 
     if IsUnitGrouped("player") then 
@@ -330,7 +351,7 @@ local function OnUpdate()
 
     if not ZO_IsTableEmpty(positionIcons) then DevDebug("updating position icons in ["..cZone.."]" ) end
     for _,info in ipairs(positionIcons) do   
-        UpdateIcon({Evaluate(info.coord.x,t), Evaluate(info.coord.y,t), Evaluate(info.coord.z,t)}, info.ctrl, info.data)
+        UpdateIcon({Evaluate(info.coord[1],t), Evaluate(info.coord[2],t), Evaluate(info.coord[3],t)}, info.ctrl, info.data)
     end
     
     -- sort draw order
@@ -423,6 +444,14 @@ function LFI.RegisterPositionIcon(id, zone, coord, icon, label)
             desaturation = icon.desaturation and icon.desaturation or 0
         }
     end   
+    if label then 
+        info.data.label = {
+            text = label.text,
+            color = label.color and label.color or standardColor,
+            size = label.size and label.size or SV.standardSize,
+            alpha = label.alpha and label.alpha or SV.alpha,
+        }
+    end 
 
 
     table.insert(positionIconVault[zone], info)
