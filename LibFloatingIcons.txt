@@ -1,13 +1,13 @@
 ## Title: LibFloatingIcons
-## APIVersion: 101036 101037
-## Version: Alpha 1
-## AddOnVersion: Alpha 1
+## APIVersion: 101037 101038
+## AddonVersion: 0
+## Version: 0.1
 ## Author: @|c00FF00ExoY|r94 (PC/EU)
 ## IsLibrary: true
 ## Description: Icons floating everywhere. 
 ## SavedVariables: LFI_SV
 
-## DependsOn: LibAddonMenu-2.0>=30
+## DependsOn: LibAddonMenu-2.0>=34
 
 lang/en.lua
 lang/$(language).lua

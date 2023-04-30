@@ -23,3 +23,5 @@ LFI_MENU_MAXSIZE_TT = "Defines the maximum size for displayed graphics."
 
 LFI_MENU_DEBUG = "Debug Mode" 
 LFI_MENU_DEBUG_WARN = "theres gonna be chat debug"
+
+LFI_MENU_WARNING_RETRO = "Does not affect already existing icons."
