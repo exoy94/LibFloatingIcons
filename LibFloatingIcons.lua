@@ -35,7 +35,7 @@ local defaultSV = {
 
 -- addon variables 
 local idLFI = "LibFloatingIcons"
-local vLFI = "0.1"
+local vLFI = "0.2"
 local uLFI 
 
 -- categories 

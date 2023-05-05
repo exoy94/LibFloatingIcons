@@ -1,7 +1,7 @@
 ## Title: LibFloatingIcons
 ## APIVersion: 101037 101038
 ## AddonVersion: 0
-## Version: 0.1
+## Version: 0.2
 ## Author: @|c00FF00ExoY|r94 (PC/EU)
 ## IsLibrary: true
 ## Description: Icons floating everywhere. 
