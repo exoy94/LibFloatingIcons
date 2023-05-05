@@ -89,6 +89,28 @@ local function IsFunc(f)
 end
 
 
+local function IsUserdata(u) 
+    return type(u) == "userdata" 
+end
+
+--[[ -------------------- ]]
+--[[ -- Identification -- ]]
+--[[ -------------------- ]]
+
+local serialNumber = {}
+local activePosition = {}
+
+local function AssignId(name, cat) 
+    table.insert(serialNumber, {name=name, cat=cat})
+    return #serialNumber
+end
+
+local function DiscardId(id) 
+    activePosition[id] = nil 
+    serialNumber[id] = false
+end
+
+
 --[[ --------------------- ]]
 --[[ -- Control Handler -- ]]
 --[[ --------------------- ]]
@@ -411,47 +433,24 @@ end
 
 --[[ -- Position Icons ]]
 
-function LFI.RegisterPositionIcon(id, zone, coord, icon, label)
-    local earlyOut = true 
-    if icon then 
-        if icon.texture then earlyOut = false end 
-    end
-    if label then 
-        if label.text then earlyOut = false end 
-    end
-    if earlyOut then return end
+function LFI.RegisterPositionIcon(name, zone, coord, icon, label, callbacks)
     
-    id = string.lower(id)
-    
-    -- create zone subtable if non existing
+    name = string.lower(name)
+
+    -- create zone subtable if it is not yet existing
     if type(positionIconVault[zone]) ~= "table" then 
         positionIconVault[zone] = {}
     end
 
-    -- return false if icon id is already used for this zone
+    -- check if icon with this name already exist for this zone
     if FindPositionIcon(positionIconVault[zone], id) then 
         DevDebug("position icon >"..id.."< already exist in ["..tostring(zone).."]")
         return false 
     end
 
-    local info = {id=id, coord=coord, data={} }
-    if icon then 
-        info.data.icon = {
-            texture = icon.texture,
-            color = icon.color and icon.color or standardColor,
-            size = icon.size and icon.size or SV.standardSize,
-            alpha = icon.alpha and icon.alpha or SV.alpha,
-            desaturation = icon.desaturation and icon.desaturation or 0
-        }
-    end   
-    if label then 
-        info.data.label = {
-            text = label.text,
-            color = label.color and label.color or standardColor,
-            size = label.size and label.size or SV.standardSize,
-            alpha = label.alpha and label.alpha or SV.alpha,
-        }
-    end 
+    local id = AssignId(name, catPos) 
+
+    local data = {id=id, name=name, coord=coord, cat=catPos}
 
 
     table.insert(positionIconVault[zone], info)
@@ -462,6 +461,8 @@ function LFI.RegisterPositionIcon(id, zone, coord, icon, label)
         info.ctrl = AssignControl(catPos, info.data)
         table.insert(positionIcons, info)
     end
+
+    return --getter and setter
 end
 
 function LFI.UnregisterPositionIcon(zone, id)
