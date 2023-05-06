@@ -83,7 +83,7 @@ local standard = {
 --[[ --------------- ]]
 
 local function Debug(str) 
-    if SV.debug then 
+    if SV.debug or SV.dev then 
         d( "[|c00FFFFLFI-Debug|r] "..str) 
     end
 end
@@ -361,11 +361,13 @@ local function FindPositionIcon(t, id)
 end
 
 local function ExistPositionIcon(zone, name) 
-    local t =  positionIconVault[zone] or {}
+    
+    if not positionIconVault[zone] then return end
+
     local vault
     local sn
 
-    for k,v in ipairs(t) do 
+    for k,v in ipairs(positionIconVault[zone]) do 
         if v.name == name then 
             vault = k
             sn = v.sn
@@ -422,10 +424,10 @@ function LFI.RegisterPositionIcon(zone, name, coord, icon)
 
     -- 
     local sn = AssignSN()
-    local data = {sn=sn, name=name, coord=coord, icon=icon}
+    local data = {sn=sn, name=name, zone=zone, coord=coord, icon=icon}
 
     -- add icon to position vault
-    table.insert(positionIconVault[zone], data)
+    table.insert(positionIconVault[zone], ZO_ShallowTableCopy(data))
     DevDebug(zo_strformat("add to position vault: > <<1>> < in [<<2>>]; SN: <<3>>", name, zone, sn))  
 
     -- check current zone, add to displayed icons
@@ -433,7 +435,6 @@ function LFI.RegisterPositionIcon(zone, name, coord, icon)
         data.controls = AssignControls(sn, LFI_POS, zone, name)
         table.insert(positionIcons, ZO_ShallowTableCopy(data) )    
     end
-
 end
 
 
@@ -452,6 +453,7 @@ function LFI.UnregisterPositionIcon(zone, name)
        table.remove(positionIcons, active)  
     end
 end
+
 
 --[[ ---------- ]]
 --[[ -- Menu -- ]]
@@ -568,6 +570,22 @@ local function OnPlayerActivated()
         Debug( zo_strformat("zone update [<<1>> -> <<2>>]",cZone, zoneId) )
 
         -- release all position icons in old zone
+        for _, data in ipairs(positionIcons) do 
+            ReleaseControls(data.sn)
+        end
+
+        positionIcons = {}
+        cZone = zoneId
+
+        if not positionIconVault[cZone] then return end 
+        for _, data in ipairs(positionIconVault[cZone]) do 
+            local controls = AssignControls(data.sn, LFI_POS, cZone, data.name)  
+            local dataNew = data
+            dataNew.controls = controls 
+            table.insert(positionIcons, dataNew)  
+        end
+        --[[
+        -- release all position icons in old zone
         for _, info in ipairs(positionIcons) do 
             ReleaseControl(info.ctrl) 
         end
@@ -583,7 +601,7 @@ local function OnPlayerActivated()
             entry.ctrl = AssignControl(catPos, info.data)
             table.insert(positionIcons, entry)
         end
-
+        ]]
     end
 end
 
@@ -705,9 +723,6 @@ local devCmd = {
             end
         end
     end, 
-    ["test"] = function() 
-        d(ExistPositionIcon(1063, "exoytest1"))
-    end,
 }
 
 
