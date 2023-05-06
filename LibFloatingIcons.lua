@@ -295,16 +295,30 @@ local function OnUpdate()
         for i = 1, GROUP_SIZE_MAX do 
             local unit = "group"..i
             local displayName = GetUnitDisplayName(unit) 
-            if displayName and not displayName == user then 
-                DevDebug("updating icons for ["..displayName.."]")  
+            if displayName and displayName ~= user then 
+                if playerIcons[displayName] then 
+                    DevDebug("updating icons for ["..displayName.."]")  
+                    local _, a,b,c = GetUnitRawWorldPosition(unit)
+                    for i=1,3 do 
+                        if playerIcons[displayName][i] then 
+                            UpdateIcon( playerIcons[displayName][i].controls.ctrl, {a,b,c}, 250+40*i)
+                        end
+                    end
+                end
             end
         end
     end
 
     -- update icons for player 
     if playerIcons[user] then --todo add here SV check 
+        DevDebug("updating icons for ["..user.."]")  
         local _, a,b,c = GetUnitRawWorldPosition("player")
-        UpdateIcon( playerIcons[user].ctrl, {a,b,c}, 100)
+        for i=1,3 do 
+            if playerIcons[user][i] then 
+                UpdateIcon( playerIcons[user][i].controls.ctrl, {a,b,c}, 300+40*i)
+            end
+        end
+        
     end
 
 
@@ -386,11 +400,26 @@ end
 -- extra: getter/setter, children, meta  
 
 -- icon: texture or {texture, color, size}
-function LFI.RegisterPlayerIcon(cat, player, icon) 
+function LFI.RegisterPlayerIcon(cat, name, player, icon) 
+    name = string.lower(name) 
+    -- initialize player subtable
     playerIconVault[player] = playerIconVault[player] or {[LFI_ID] = false, [LFI_BUFF] = false, [LFI_MECH] = false}
+
+    local sn = AssignSN() 
+    local data = {sn=sn, name=name, player=player, icon=icon}
+    playerIconVault[player][cat] = ZO_ShallowTableCopy(data) 
+    
+    playerIcons[player] = playerIcons[player] or {[LFI_ID] = false, [LFI_BUFF] = false, [LFI_MECH] = false}
+    
+    data.controls = AssignControls(sn, cat, player, name)
+    playerIcons[player][cat] = ZO_ShallowTableCopy(data)
 end
 
 
+
+function LFI.HasPlayerIcon(player) 
+
+end
 
 --[[ Position Icons ]]
 
@@ -414,7 +443,7 @@ function LFI.RegisterPositionIcon(zone, name, coord, icon)
     DevDebug(zo_strformat("add to position vault: > <<1>> < in [<<2>>]; SN: <<3>>", name, zone, sn))  
     -- check current zone, add to displayed icons
     if zone == cZone then 
-        data.controls = AssignControls(sn, LFI_POS, zone, name)
+        data.controls = AssignControls(sn, LFI_POS, player, name)
         table.insert(positionIcons, ZO_ShallowTableCopy(data) )    
     end
 end
@@ -546,6 +575,7 @@ end
 --[[ -- Events -- ]]
 --[[ ------------ ]]
 
+--[[ handling zone changes ]]
 local function OnPlayerActivated() 
     local zoneId = GetZoneId(GetUnitZoneIndex("player"))
     if zoneId ~= cZone then 
@@ -569,6 +599,51 @@ local function OnPlayerActivated()
     end
 end
 
+--[[ handling group member changes ]] 
+local function AddGroupMember(displayName)
+
+end
+
+local function RemoveGroupMember(displayName) 
+
+end
+
+
+local function CheckGroupMembers() 
+    if IsUnitGrouped("player") then return end
+    for i=1,GROUP_SIZE_MAX do 
+
+    end
+end
+
+
+local function OnGroupMemberConnectionStatus(_, unitTag, isOnline) 
+    -- on logout event fires 3 times: false, true, false 
+    local displayName = GetUnitDisplayName(unitTag) 
+    if isOnline then 
+        AddGroupMember(displayName) 
+    else 
+        RemoveGroupMember(displayName)
+    end
+end
+
+
+local function OnGroupMemberLeft(_, _, _, _, _, displayName) 
+    if displayName == user then 
+        --remove all entries but user
+    else 
+        RemoveGroupMember(displayName) 
+    end
+end 
+
+
+local function OnGroupMemberJoined(_,_,displayName) 
+    if displayName == user then 
+        CheckGroupMembers( ) 
+    else 
+        AddGroupMember(displayName)
+    end
+end
 
 --[[ ---------------- ]]
 --[[ -- Initialize -- ]] 
@@ -588,8 +663,15 @@ local function Initialize()
                 DefineUpdateInterval(SV.interval) 
             end
 
+            -- register group events    
+            EM:RegisterForEvent(idLFI, EVENT_GROUP_MEMBER_CONNECTED_STATUS, OnGroupMemberConnectionStatus)
+            EM:RegisterForEvent(idLFI, EVENT_GROUP_MEMBER_LEFT, OnGroupMemberLeft)
+            EM:RegisterForEvent(idLFI, EVENT_GROUP_MEMBER_JOINED, OnGroupMemberJoined)
+
             EM:RegisterForEvent(idLFI, EVENT_PLAYER_ACTIVATED, OnPlayerActivated)
         end)
+
+
 
     -- initialize player data 
     cZone, _, _, _ = GetUnitRawWorldPosition("player") 
@@ -681,7 +763,7 @@ local devCmd = {
             table.insert(detailCache, controls.meta)
         end
         DevDebug(zo_strformat("active control list size: <<1>>", empty and "|cFF0000empty|r" or "|c00FF00"..tostring(#detailCache).."|r"))
-        if par=="detail" then 
+        if par=="list" then 
             for _, metaData in ipairs(detailCache) do  
                 d(zo_strformat("[<<1>>] - <<2>> icon; <<3>>; <<4>>", metaData[1], globalLookup[metaData[2]], metaData[3], metaData[4]))
             end
