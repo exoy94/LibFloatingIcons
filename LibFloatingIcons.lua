@@ -130,6 +130,9 @@ local function AssignSN()
     return serialNumber 
 end
 
+local function IsControlActive(sn) 
+    return IsTable(activeControls[sn])
+end
 
 local function CreateNewControls() 
     local name = string.format("%s_%s_%d", idLFI, "Gui", memorySize)
@@ -183,13 +186,13 @@ local function AssignControls(sn, cat, subT, name)
     
     controls.meta = {sn, cat, subT, name} 
     activeControls[sn] = controls -- todo give it controls here? 
-    DevDebug("allocated controls for: sn = "..tostring(sn))
+    DevDebug("allocated controls (sn = "..tostring(sn)..")")
     return controls
 end
 
 
 local function ReleaseControls(sn) 
-    if not IsUserdata(activeControls[sn]) then return end
+    if not IsTable(activeControls[sn]) then return end
 
     local controls = activeControls[sn]
     controls.ctrl:SetHidden(true) 
@@ -197,7 +200,7 @@ local function ReleaseControls(sn)
     controls.index:SetTexture(nil) 
     controls.meta = nil 
 
-    DevDebug("released controls with sn: "..tostring(sn))
+    DevDebug("released controls (sn = "..tostring(sn)..")")
     table.insert(controlCache, controls)
     cacheSize = cacheSize + 1
     activeControls[sn] = nil
@@ -307,7 +310,7 @@ local function OnUpdate()
     if not ZO_IsTableEmpty(positionIcons) then DevDebug("updating position icons in ["..cZone.."]" ) end
     for _,data in ipairs(positionIcons) do   
         --UpdateIcon({Evaluate(info.coord[1],t), Evaluate(info.coord[2],t), Evaluate(info.coord[3],t)}, info.ctrl, info.data)
-        UpdateIcon(data.gui.ctrl, data.coord, 100)
+        UpdateIcon(data.controls.ctrl, data.coord, 100)
     end
     
     -- sort draw order
@@ -359,12 +362,26 @@ end
 
 local function ExistPositionIcon(zone, name) 
     local t =  positionIconVault[zone] or {}
+    local vault
+    local sn
+
     for k,v in ipairs(t) do 
         if v.name == name then 
-            return k 
+            vault = k
+            sn = v.sn
         end 
     end
-    return false
+
+    local active 
+    if IsControlActive(sn) then 
+        for k,v in ipairs(positionIcons) do 
+            if v.name == name then 
+                active = k 
+            end
+        end
+    end
+
+    return sn, vault, active
 end
 
 -- TODO check input and insert default values if needed
@@ -423,17 +440,17 @@ end
 function LFI.UnregisterPositionIcon(zone, name) 
     name = string.lower(name) 
 
-    local entry = ExistPositionIcon(zone, name)
-    if not entry then 
+    local sn, vault, active = ExistPositionIcon(zone, name)
+    if not sn then 
         DevDebug("position icon > "..name.." < doesnt exist in ["..tostring(zone).."]")
-        return false 
-    end
-    table.remove(positionIconVault[zone], entry)
-
-    if zone == cZone then 
-        -- find icon, free sn, remove entry etc. 
     end
 
+    table.remove(positionIconVault[zone], vault)
+
+    if active then 
+       ReleaseControls(sn) 
+       table.remove(positionIcons, active)  
+    end
 end
 
 --[[ ---------- ]]
@@ -688,6 +705,9 @@ local devCmd = {
             end
         end
     end, 
+    ["test"] = function() 
+        d(ExistPositionIcon(1063, "exoytest1"))
+    end,
 }
 
 
