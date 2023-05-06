@@ -11,7 +11,19 @@ local WM = GetWindowManager()
 --[[ -- Globals -- ]] 
 --[[ ------------- ]]
 
+LFI_ID = 1
+LFI_BUFF = 2
+LFI_MECH = 3
+LFI_POS = 4
+LFI_ALLY = 5
 
+local globalLookup = {
+    [LFI_ID] = "identifier", 
+    [LFI_BUFF] = "buff", 
+    [LFI_MECH] = "mechanic",
+    [LFI_POS] = "position",
+    [LFI_ALLY] = "allied"
+}
 --[[ --------------------- ]]
 --[[ -- Saved Variables -- ]]
 --[[ --------------------- ]]
@@ -46,12 +58,18 @@ local catPos = 4
 local numCat = 4
 
 -- player data 
-local player = ""
+local user = ""
 local cZone = 0  
+
+-- rendering 
+local RenderSpace 
+local Window 
 
 -- tables 
 local playerIcons = {}
-local petIcons = {} --including companions, assistant etc. ???? 
+local playerIconVault = {}
+local alliedIcons = {}                  --including companions, assistant etc. ???? 
+local alliedIconVault = {}
 local positionIcons = {} 
 local positionIconVault = {}
 
@@ -88,122 +106,101 @@ local function IsFunc(f)
     return type(f) == "function" 
 end
 
+local function IsUserdata(u) 
+    return type(u) == "userdata"
+end
+
+local function IsTable(t) 
+    return type(t) == "table" 
+end
 
 --[[ --------------------- ]]
 --[[ -- Control Handler -- ]]
 --[[ --------------------- ]]
 
-local RenderSpace 
-local Window 
-local controlPool = {} 
-local poolHandler = {}  -- keeps track of how many controls of one catorgory are currently not in use
-local cacheHandler = {} -- keeps track of how many controls of one category exist
+local serialNumber = 0      -- highest existing serialNumber
+local memorySize = 0        -- number of controls created
+local cacheSize = 0         -- number of controlls currently not used
+local controlCache = {}     -- table with unused controls
+local activeControls = {}   -- table with serialNumbers, who are assigned a control
 
 
-
-local function ApplyStaticProperty(control,cmd,var) 
-    if cmd == "color" then control:SetColor(var[1], var[2], var[3],1)
-    elseif cmd == "texture" then control:SetTexture(var) 
-    elseif cmd == "alpha" then control:SetAlpha(var)
-    elseif cmd == "size" then 
-        local size = zo_min(var, SV.maxSize)
-        control:SetDimensions(size, size)
-    elseif cmd == "desaturation" then control:SetDesaturation(var)
-    elseif cmd == "font" then control:SetFont(var) 
-    elseif cmd == "text" then control:SetText(var)
-    end
-end
-
-local function HandleProperties(ctrl, data) 
-    for _, control in ipairs(ctrl.list) do 
-        ctrl[control]:SetHidden(data[control] == nil) 
-    end
-
-    local callbacks = {}
-    for control, properties in pairs(data) do 
-        callbacks[control] = {}
-        for k,v in pairs(properties) do 
-            if IsFunc(v) then 
-                callbacks[control][k] = v         
-            else 
-                ApplyStaticProperty(ctrl[control], k, v)
-            end
-        end
-    end
-    ctrl.callbacks = callbacks
+local function AssignSN()
+    serialNumber = serialNumber + 1
+    return serialNumber 
 end
 
 
-local function CreateNewControl(cat) 
-    local name = string.format("%s_%s_%d_%d", idLFI, "Ctrl", cat, cacheHandler[cat])
+local function CreateNewControls() 
+    local name = string.format("%s_%s_%d", idLFI, "Gui", memorySize)
 
-    local ctrl = WM:CreateControl( name, Window, CT_CONTROL) 
-
+    local ctrl = WM:CreateControl( name.."ctrl", Window, CT_CONTROL) 
     ctrl:ClearAnchors()
     ctrl:SetAnchor( BOTTOM, Window, CENTER, 0, 0)
     ctrl:SetHidden(false) 
 
-    ctrl.cat = cat 
-    
-    -- support functions 
-    local function AddIcon() 
-        local icon = WM:CreateControl( name.."_Icon", ctrl, CT_TEXTURE)
-        icon:ClearAnchors()
-        icon:SetAnchor( CENTER, ctrl, CENTER, 0, 0)
-        icon:SetTextureReleaseOption(RELEASE_TEXTURE_AT_ZERO_REFERENCES) 
-        return icon
-    end
+    local backdrop 
+    local edge 
 
-    local function AddLabel() 
-        local label = WM:CreateControl( name.."_Label", ctrl, CT_LABEL)
-        label:ClearAnchors() 
-        label:SetAnchor(CENTER, ctrl, CENTER, 0, 0)
-        label:SetVerticalAlignment( TEXT_ALIGN_CENTER )
-        label:SetHorizontalAlignment( TEXT_ALIGN_CENTER )
-        label:SetFont("ZoFontWinH1")
-        return label
-    end
+    local icon = WM:CreateControl( name.."_Icon", ctrl, CT_TEXTURE)
+    icon:ClearAnchors()
+    icon:SetAnchor( CENTER, ctrl, CENTER, 0, 0)
+    icon:SetTextureReleaseOption(RELEASE_TEXTURE_AT_ZERO_REFERENCES) 
+    icon:SetTexture( GetAbilityIcon(112323) )
+    icon:SetDimensions(50,50)
 
-    -- add different controls depending on category 
-    local list = {}
-    if cat == catId then 
+    local label = WM:CreateControl( name.."_Label", ctrl, CT_LABEL)
+    label:ClearAnchors() 
+    label:SetAnchor(CENTER, ctrl, CENTER, 0, 0)
+    label:SetVerticalAlignment( TEXT_ALIGN_CENTER )
+    label:SetHorizontalAlignment( TEXT_ALIGN_CENTER )
+    label:SetFont("ZoFontWinH1")
 
-    elseif cat == catBuff then 
+    local index = WM:CreateControl( name.."_Index", ctrl, CT_TEXTURE)
+    index:ClearAnchors()
+    index:SetAnchor( CENTER, ctrl, CENTER, 0, 0)
+    index:SetTextureReleaseOption(RELEASE_TEXTURE_AT_ZERO_REFERENCES) 
 
-    elseif cat == catMech then 
-
-    elseif cat == catPos then 
-        ctrl.icon = AddIcon() 
-        ctrl.label = AddLabel() 
-        list = {"icon", "label"}
-    end
-    ctrl.list = list
-
-    return ctrl 
+    return {ctrl=ctrl, back=back, edge=edge, icon=icon, label=label, index=index}
 end
 
 
-local function AssignControl(cat, data)
-    local ctrl 
-    if poolHandler[cat] > 0 then 
-        ctrl = controlPool[cat][poolHandler[cat]]
-        table.remove(controlPool[cat])
-        poolHandler[cat] = poolHandler[cat] - 1
-        ctrl:SetHidden(false) 
+local function AssignControls(sn, cat, subT, name) 
+    local controls
+    if cacheSize > 0 then 
+
+        controls = controlCache[cacheSize]
+        table.remove(controlCache, cacheSize)
+        cacheSize = cacheSize - 1
+        DevDebug("grab free control - new cacheSize: "..tostring(cacheSize) )
+
+        controls.ctrl:SetHidden(false)
     else 
-        cacheHandler[cat] = cacheHandler[cat] + 1
-        ctrl = CreateNewControl(cat)
+        memorySize = memorySize + 1
+        controls = CreateNewControls() 
+        DevDebug("create new controls - new memorySize: "..tostring(memorySize) )
     end
-    HandleProperties(ctrl, data) 
-    return ctrl 
+    
+    controls.meta = {sn, cat, subT, name} 
+    activeControls[sn] = controls -- todo give it controls here? 
+    DevDebug("allocated controls for: sn = "..tostring(sn))
+    return controls
 end
 
 
-local function ReleaseControl(ctrl)
-    ctrl:SetHidden(true) 
-    if ctrl.icon then ctrl.icon:SetTexture(nil) end
-    table.insert(controlPool[ctrl.cat], ctrl)
-    poolHandler[ctrl.cat] = poolHandler[ctrl.cat] + 1
+local function ReleaseControls(sn) 
+    if not IsUserdata(activeControls[sn]) then return end
+
+    local controls = activeControls[sn]
+    controls.ctrl:SetHidden(true) 
+    controls.icon:SetTexture(nil) 
+    controls.index:SetTexture(nil) 
+    controls.meta = nil 
+
+    DevDebug("released controls with sn: "..tostring(sn))
+    table.insert(controlCache, controls)
+    cacheSize = cacheSize + 1
+    activeControls[sn] = nil
 end
 
 
@@ -215,14 +212,12 @@ end
 local function OnUpdate()   
 
     DevDebug("update executed at "..tostring(GetGameTimeMilliseconds()))
-    local earlyOut = true
-    for i=1,numCat do  
-        if poolHandler[i] < cacheHandler[i] then 
-            earlyOut = false 
-        end
+    if cacheSize == memorySize then 
+        DevDebug("update aborted - no icons used")
+        return
     end
-    if earlyOut then 
-        DevDebug("update early out")
+    if cacheSize > memorySize then 
+        DevDebug("update aborted - corrupted data")
         return
     end
 
@@ -255,11 +250,9 @@ local function OnUpdate()
     local zOrder = {}
     local zTotal = 0
 
-    local function UpdateIcon(coord, ctrl, data)
+    local function UpdateIcon(ctrl, coord, offset)
         local wX, wY, wZ = coord[1], coord[2], coord[3]
-        if ctrl.cat ~= 4 then 
-            wY = wY + 2*100 --offset (ToDo) 
-        end
+        wY = wY + offset
 
         -- calculate unit view position
         local pX = wX * i11 + wY * i21 + wZ * i31 + i41
@@ -290,68 +283,31 @@ local function OnUpdate()
         ctrl:SetAnchor(BOTTOM, Window, CENTER, x, y)
         ctrl:SetScale( scale )
         ctrl:SetAlpha( fade )
-
-        -- update dynamic properties
-        local cb = ctrl.callbacks.icon
-        if not ZO_IsTableEmpty(cb) then 
-            if cb.texture then ctrl.icon:SetTexture( Evaluate(data.icon.texture,t) ) end
-            if cb.color then 
-                local color = Evaluate(data.icon.color, t)
-                ctrl.icon:SetColor( color[1], color[2], color[3] ) 
-            end
-            if cb.size then 
-                local size = Evaluate(data.icon.size, t)
-                size = zo_min(size, SV.maxSize)
-                ctrl.icon:SetDimensions( size, size )
-            end
-            if cb.desaturation then 
-                ctrl.icon:SetDesaturation( Evaluate(data.icon.desaturation) )
-            end
-        end
-        local cb = ctrl.callbacks.label
-        if not ZO_IsTableEmpty(cb) then 
-            if cb.text then ctrl.label:SetText( Evaluate(data.label.text,t) ) end
-            if cb.color then 
-                local color = Evaluate(data.label.color, t)
-                ctrl.label:SetColor( color[1], color[2], color[3] ) 
-            end
-            if cb.size then 
-                local size = Evaluate(data.label.size, t)
-                size = zo_min(size, SV.maxSize)
-                ctrl.label:SetDimensions( size, size )
-            end
-            if cb.desaturation then 
-                ctrl.label:SetDesaturation( Evaluate(data.label.desaturation) )
-            end
-        end
     end
-
+    
+    -- update icons for group members
     if IsUnitGrouped("player") then 
         for i = 1, GROUP_SIZE_MAX do 
             local unit = "group"..i
             local displayName = GetUnitDisplayName(unit) 
-            if displayName then 
-                DevDebug("updating icons for ["..displayName.."]")
-                --TODO check if unit is player and compare with settings 
-
-                --if playerIcons[displayName] then 
-                --    local offset = SV.offset
-                --   for j = 1, 3 do 
-                --      if playerIcons[displayName][j] then 
-                            
-                            -- CalculateIconScreenData(unit, data) 
-                            -- offset = offset + size + margin
-                            -- update other properties 
-                --     end
-                -- end
-                --end   
+            if displayName and not displayName == user then 
+                DevDebug("updating icons for ["..displayName.."]")  
             end
         end
     end
 
+    -- update icons for player 
+    if playerIcons[user] then --todo add here SV check 
+        local _, a,b,c = GetUnitRawWorldPosition("player")
+        UpdateIcon( playerIcons[user].ctrl, {a,b,c}, 100)
+    end
+
+
+    -- update icons for positions
     if not ZO_IsTableEmpty(positionIcons) then DevDebug("updating position icons in ["..cZone.."]" ) end
-    for _,info in ipairs(positionIcons) do   
-        UpdateIcon({Evaluate(info.coord[1],t), Evaluate(info.coord[2],t), Evaluate(info.coord[3],t)}, info.ctrl, info.data)
+    for _,data in ipairs(positionIcons) do   
+        --UpdateIcon({Evaluate(info.coord[1],t), Evaluate(info.coord[2],t), Evaluate(info.coord[3],t)}, info.ctrl, info.data)
+        UpdateIcon(data.gui.ctrl, data.coord, 100)
     end
     
     -- sort draw order
@@ -383,6 +339,7 @@ local function DefineUpdateInterval(interval)
     end
     EM:RegisterForUpdate(idLFI, interval, OnUpdate)
     uLFI = interval
+    OnUpdate()
     DevDebug("update running every "..tostring(interval).."ms") 
 end
 
@@ -400,109 +357,84 @@ local function FindPositionIcon(t, id)
     return false
 end
 
+local function ExistPositionIcon(zone, name) 
+    local t =  positionIconVault[zone] or {}
+    for k,v in ipairs(t) do 
+        if v.name == name then 
+            return k 
+        end 
+    end
+    return false
+end
+
 -- TODO check input and insert default values if needed
 
 --[[ ----------------------- ]]
 --[[ -- Exposed Functions -- ]]
 --[[ ----------------------- ]]
 
--- icon: tex, col, size, alpha
--- label: text, col, alpha, font
+-- cat: LFI_ID, LFI_BUFF, LFI_MECH, LFI_POS
+-- name: so that other add
+-- icon: texture or table 
+-- extra: getter/setter, children, meta  
 
---[[ -- Position Icons ]]
+-- icon: texture or {texture, color, size}
+function LFI.RegisterPlayerIcon(cat, player, icon) 
 
-function LFI.RegisterPositionIcon(id, zone, coord, icon, label)
-    local earlyOut = true 
-    if icon then 
-        if icon.texture then earlyOut = false end 
-    end
-    if label then 
-        if label.text then earlyOut = false end 
-    end
-    if earlyOut then return end
-    
-    id = string.lower(id)
-    
-    -- create zone subtable if non existing
-    if type(positionIconVault[zone]) ~= "table" then 
-        positionIconVault[zone] = {}
-    end
+    playerIconVault[player] = playerIconVault[player] or {[LFI_ID] = false, [LFI_BUFF] = false, [LFI_MECH] = false}
 
-    -- return false if icon id is already used for this zone
-    if FindPositionIcon(positionIconVault[zone], id) then 
-        DevDebug("position icon >"..id.."< already exist in ["..tostring(zone).."]")
-        return false 
-    end
-
-    local info = {id=id, coord=coord, data={} }
-    if icon then 
-        info.data.icon = {
-            texture = icon.texture,
-            color = icon.color and icon.color or standardColor,
-            size = icon.size and icon.size or SV.standardSize,
-            alpha = icon.alpha and icon.alpha or SV.alpha,
-            desaturation = icon.desaturation and icon.desaturation or 0
-        }
-    end   
-    if label then 
-        info.data.label = {
-            text = label.text,
-            color = label.color and label.color or standardColor,
-            size = label.size and label.size or SV.standardSize,
-            alpha = label.alpha and label.alpha or SV.alpha,
-        }
-    end 
-
-
-    table.insert(positionIconVault[zone], info)
-    DevDebug(zo_strformat("register position icon ><<2>>< in [<<1>>]", zone, id))
-
-    -- add icon to currently displayed icons if already in the correct zone
-    if zone == cZone then 
-        info.ctrl = AssignControl(catPos, info.data)
-        table.insert(positionIcons, info)
-    end
 end
 
-function LFI.UnregisterPositionIcon(zone, id)
-    id = string.lower(id)
-    local k1 = FindPositionIcon(positionIconVault[zone], id)
-    if not k1 then 
-        DevDebug("position icon >"..id.."< doesnt exist in ["..tostring(zone).."]")
-        return false 
+
+
+--[[ Position Icons ]]
+
+function LFI.RegisterPositionIcon(zone, name, coord, icon) 
+    name = string.lower(name) 
+
+    -- initialize position icon zone subtable
+    positionIconVault[zone] = positionIconVault[zone] or {}
+
+    -- early out if name is already used within this zone 
+    if ExistPositionIcon(zone, name) then 
+        DevDebug("position icon >"..name.."< already exist in ["..tostring(zone).."]")
+        return
     end
 
-    table.remove(positionIconVault[zone], k1)
-    
+    -- ToDo: additional checks to verify parameter 
+
+    -- 
+    local sn = AssignSN()
+    local data = {sn=sn, name=name, coord=coord, icon=icon}
+
+    -- add icon to position vault
+    table.insert(positionIconVault[zone], data)
+    DevDebug(zo_strformat("add to position vault: > <<1>> < in [<<2>>]; SN: <<3>>", name, zone, sn))  
+
+    -- check current zone, add to displayed icons
     if zone == cZone then 
-        local k2 = FindPositionIcon(positionIcons, id)
-        ReleaseControl(positionIcons[k2].ctrl)
-        table.remove(positionIcons, k2)
+        data.controls = AssignControls(sn, LFI_POS, zone, name)
+        table.insert(positionIcons, ZO_ShallowTableCopy(data) )    
     end
-    DevDebug(zo_strformat("unregister position icon ><<2>>< in [<<1>>]", zone, id))
+
 end
 
---TODO add temporary overwrite, meaning the current icon gets stored and re-enabled when the "new one" gets removed again
 
--- data:    -- texture (string or callback)  first param time, second unitTag, third custom (must be provided as callback)
-            -- color (rgba or callback)
-            -- size (nummer (or callback???) )
-        --> wenn kein callback übergeben, in ein callback umwandeln beim abspeichern für einfacheres handhaben in der update function
+function LFI.UnregisterPositionIcon(zone, name) 
+    name = string.lower(name) 
 
---local exampleIconData = {
---    tex = "textureString", 
---    parTex = >callback<,
---    color  
---}
+    local entry = ExistPositionIcon(zone, name)
+    if not entry then 
+        DevDebug("position icon > "..name.." < doesnt exist in ["..tostring(zone).."]")
+        return false 
+    end
+    table.remove(positionIconVault[zone], entry)
 
+    if zone == cZone then 
+        -- find icon, free sn, remove entry etc. 
+    end
 
-
--- positionCallback for moving position icon 
--- blinking 
--- callback to updateIcon (for countdown etc) 
--- mechanicIcon: 
-
--- for unique icon: texture, callback for animation, 
+end
 
 --[[ ---------- ]]
 --[[ -- Menu -- ]]
@@ -662,14 +594,7 @@ local function Initialize()
 
     -- initialize player data 
     cZone, _, _, _ = GetUnitRawWorldPosition("player") 
-    player = GetUnitDisplayName("player")
-
-    -- initialize tables for control handler 
-    for i=1,numCat do 
-        controlPool[i] = {}
-        poolHandler[i] = 0
-        cacheHandler[i] = 0
-    end
+    user = GetUnitDisplayName("player")
 
     -- create render space 
     RenderSpace = WM:CreateControl( 'LFI_RenderSpace', GuiRoot, CT_CONTROL )
@@ -748,36 +673,19 @@ local devCmd = {
                 DefineUpdateInterval(tonumber(par)*1000)
             end
         end
-    end, 
-    ["cache"] = function() 
-        if not SV.dev then return end
-        local out = ""
-        for i=1,numCat do 
-            out = out..tostring(cacheHandler[i])
-            if i ~= numCat then out=out.."," end
+    end,
+    ["active"] = function(par)
+        if not SV.dev then return end 
+        local empty = ZO_IsTableEmpty(activeControls)
+        local detailCache = {}
+        for _,controls in pairs(activeControls) do 
+            table.insert(detailCache, controls.meta)
         end
-        DevDebug("cache {"..out.."}")
-    end, 
-    ["pool"] = function() 
-        if not SV.dev then return end
-        local out = ""
-        for i=1,numCat do 
-            out = out..tostring(poolHandler[i])
-            if i ~= numCat then out=out.."," end
-        end
-        DevDebug("pool {"..out.."}")
-    end, 
-    ["pos"] = function(par) 
-        if not SV.dev then return end
-        -- list all position icons for current zone
-        if par == "here" then 
-            d(positionIcons[cZone])
-        -- list all position icons for specific zone
-        elseif type(par) == "number" then 
-
-        -- list number of position icons for all zones
-        else 
-
+        DevDebug(zo_strformat("active control list size: <<1>>", empty and "|cFF0000empty|r" or "|c00FF00"..tostring(#detailCache).."|r"))
+        if par=="detail" then 
+            for _, metaData in ipairs(detailCache) do  
+                d(zo_strformat("[<<1>>] - <<2>> icon; <<3>>; <<4>>", metaData[1], globalLookup[metaData[2]], metaData[3], metaData[4]))
+            end
         end
     end, 
 }
