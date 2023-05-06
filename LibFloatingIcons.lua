@@ -175,18 +175,18 @@ local function AssignControls(sn, cat, subT, name)
         controls = controlCache[cacheSize]
         table.remove(controlCache, cacheSize)
         cacheSize = cacheSize - 1
-        DevDebug("grab free control - new cacheSize: "..tostring(cacheSize) )
+        DevDebug("grab free control (new cacheSize: "..tostring(cacheSize)..")" )
 
         controls.ctrl:SetHidden(false)
     else 
         memorySize = memorySize + 1
         controls = CreateNewControls() 
-        DevDebug("create new controls - new memorySize: "..tostring(memorySize) )
+        DevDebug("create new controls (new memorySize: "..tostring(memorySize)..")" )
     end
     
     controls.meta = {sn, cat, subT, name} 
-    activeControls[sn] = controls -- todo give it controls here? 
-    DevDebug("allocated controls (sn = "..tostring(sn)..")")
+    activeControls[sn] = controls
+    DevDebug("allocated controls (SN "..tostring(sn)..")")
     return controls
 end
 
@@ -200,7 +200,7 @@ local function ReleaseControls(sn)
     controls.index:SetTexture(nil) 
     controls.meta = nil 
 
-    DevDebug("released controls (sn = "..tostring(sn)..")")
+    DevDebug("released controls (SN "..tostring(sn)..")")
     table.insert(controlCache, controls)
     cacheSize = cacheSize + 1
     activeControls[sn] = nil
@@ -214,9 +214,11 @@ end
 
 local function OnUpdate()   
 
-    DevDebug("update executed at "..tostring(GetGameTimeMilliseconds()))
+    if uLFI > 1000 then    
+        DevDebug("update executed at "..tostring(GetGameTimeMilliseconds()))
+    end
     if cacheSize == memorySize then 
-        DevDebug("update aborted - no icons used")
+        DevDebug("update aborted (no active icons)")
         return
     end
     if cacheSize > memorySize then 
@@ -351,29 +353,18 @@ end
 --[[ -- for Exposed Framework -- ]]
 --[[ --------------------------- ]]
 
-local function FindPositionIcon(t, id)
-    for k,v in pairs(t) do 
-        if v.id == id then 
-            return k 
-        end
-    end
-    return false
-end
-
 local function ExistPositionIcon(zone, name) 
-    
     if not positionIconVault[zone] then return end
-
     local vault
     local sn
-
+    -- determine table key in position vault
     for k,v in ipairs(positionIconVault[zone]) do 
         if v.name == name then 
             vault = k
             sn = v.sn
         end 
     end
-
+    -- determine table key in active position 
     local active 
     if IsControlActive(sn) then 
         for k,v in ipairs(positionIcons) do 
@@ -382,11 +373,8 @@ local function ExistPositionIcon(zone, name)
             end
         end
     end
-
     return sn, vault, active
 end
-
--- TODO check input and insert default values if needed
 
 --[[ ----------------------- ]]
 --[[ -- Exposed Functions -- ]]
@@ -399,9 +387,7 @@ end
 
 -- icon: texture or {texture, color, size}
 function LFI.RegisterPlayerIcon(cat, player, icon) 
-
     playerIconVault[player] = playerIconVault[player] or {[LFI_ID] = false, [LFI_BUFF] = false, [LFI_MECH] = false}
-
 end
 
 
@@ -410,26 +396,22 @@ end
 
 function LFI.RegisterPositionIcon(zone, name, coord, icon) 
     name = string.lower(name) 
-
     -- initialize position icon zone subtable
     positionIconVault[zone] = positionIconVault[zone] or {}
-
     -- early out if name is already used within this zone 
     if ExistPositionIcon(zone, name) then 
         DevDebug("position icon >"..name.."< already exist in ["..tostring(zone).."]")
         return
     end
-
     -- ToDo: additional checks to verify parameter 
 
-    -- 
+    -- registering icon
+    Debug( zo_strformat() )
     local sn = AssignSN()
     local data = {sn=sn, name=name, zone=zone, coord=coord, icon=icon}
-
     -- add icon to position vault
     table.insert(positionIconVault[zone], ZO_ShallowTableCopy(data))
     DevDebug(zo_strformat("add to position vault: > <<1>> < in [<<2>>]; SN: <<3>>", name, zone, sn))  
-
     -- check current zone, add to displayed icons
     if zone == cZone then 
         data.controls = AssignControls(sn, LFI_POS, zone, name)
@@ -584,24 +566,6 @@ local function OnPlayerActivated()
             dataNew.controls = controls 
             table.insert(positionIcons, dataNew)  
         end
-        --[[
-        -- release all position icons in old zone
-        for _, info in ipairs(positionIcons) do 
-            ReleaseControl(info.ctrl) 
-        end
-
-        -- reset position icon table and change zone variable
-        positionIcons = {}
-        cZone = zoneId
-
-        -- add position icons from vault to current zone
-        if not positionIconVault[cZone] then return end
-        for _,info in ipairs(positionIconVault[cZone]) do 
-            local entry = ZO_ShallowTableCopy(info) 
-            entry.ctrl = AssignControl(catPos, info.data)
-            table.insert(positionIcons, entry)
-        end
-        ]]
     end
 end
 
