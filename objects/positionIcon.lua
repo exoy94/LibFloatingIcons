@@ -1,15 +1,15 @@
 LibFloatingIcons = LibFloatingIcons or {}
 local LFI = LibFloatingIcons 
 
-local WM 
+local WM = GetWindowManager()
 
 
-local PosIconHandler = {}
-PosIconHandler.__index = PosIconHandler 
+local Handler = {}
+Handler.__index = Handler 
 
 
-function PosIconHandler:New( position, texture) 
-    local obj = setmetatable( {}, PosIconHandler)
+function Handler:New(addon, name, position, texture) 
+    local obj = setmetatable( {}, Handler)
 
     --- position *table*:nilable
     -- defines zone, world position, vertical offset 
@@ -17,6 +17,23 @@ function PosIconHandler:New( position, texture)
     --- texture *table*:nilable 
     -- defines, texture, color, size for default texture (simple usecase) 
 
+    local ctrl = WM:CreateControl( name.."ctrl", LFI.window, CT_CONTROL) 
+    ctrl:ClearAnchors()
+    ctrl:SetAnchor( BOTTOM, Window, CENTER, 0, 0)
+    ctrl:SetHidden(false) 
+
+    local icon = WM:CreateControl( name.."_Icon", ctrl, CT_TEXTURE)
+    icon:ClearAnchors()
+    icon:SetAnchor( CENTER, ctrl, CENTER, 0, 0)
+    icon:SetTextureReleaseOption(RELEASE_TEXTURE_AT_ZERO_REFERENCES) 
+    icon:SetTexture( GetAbilityIcon(112323) )
+    icon:SetDimensions(50,50)
+
+    obj.addon = addon
+    obj.name = name 
+    obj.ctrl = ctrl 
+
+    obj.position = {position.x, position.y, position.z}
     
     -- create a control to the top level window 
     -- create a texture control 
@@ -26,10 +43,18 @@ function PosIconHandler:New( position, texture)
     return obj
 end
 
+function Handler:GetPosition() 
+    return self.position
+end
+
+function Handler:GetCtrl() 
+    return self.ctrl 
+end
+
 
 
 -- function like this to adjust the predefined texture 
-function PosIconHandler:SetTexture() 
+function Handler:SetTexture() 
 
 end
 
@@ -39,7 +64,7 @@ end
 --- advanced display option 
 -- you add your controls here and can build your own display 
 -- since you have the ctrl, you can do all kind of fancy stuff that do not need to be covered by the library 
-function PosIconHandler:AddControl( ctrlType )
+function Handler:AddControl( ctrlType )
     --- need to determine name 
     --- potentially some objPool aspect? 
     local ctrl = WM:CreateControl( name, self.ctrl, ctrlType ) --- can probably use a template control here, where i removed all the functions i dont want 
@@ -70,9 +95,13 @@ end
 --[[ internally, i just need to update the current position ]]
 
 
+--position = {zone, x, y, z, activeState} 
+--icon = {texture, size, color, }
 
 
-
-function LFI.RegisterPositionIcon( addon, position, texture )
-    return PosIconHandler:New( addon, position, texture )  
+function LFI.RegisterPositionIcon( addon, name, position, icon )
+    local obj = Handler:New( addon, name, position, icon )  
+    table.insert(LFI.activePositionIcons, obj)
+    return obj 
+    --- i need to provide a subclass only with the things that i want to have exposed 
 end
