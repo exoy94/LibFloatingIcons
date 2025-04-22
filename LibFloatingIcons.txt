@@ -8,6 +8,7 @@
 ## SavedVariables: LFI_SV
 
 ## DependsOn: LibAddonMenu-2.0>=34
+## OptionalDependsOn: LibExoYsUtilities
 
 lang/en.lua
 lang/$(language).lua

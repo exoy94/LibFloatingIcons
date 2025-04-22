@@ -1,107 +1,313 @@
 LibFloatingIcons = LibFloatingIcons or {}
-local LFI = LibFloatingIcons 
+
+LibFloatingIcons.internal = LibFloatingIcons.internal or {}
+
+local LFI = LibFloatingIcons.internal
+
+
 
 local WM = GetWindowManager()
 
+--[[ ------------------------- ]]
+--[[ -- Incremental Counter -- ]]
+--[[ ------------------------- ]]
 
-local Handler = {}
-Handler.__index = Handler 
+local snCounter = 0 
+local function GetSerialNumber() 
+    snCounter = snCounter + 1 
+    return snCounter
+end
+
+--- objectId 
+-- unique number for each object 
+-- can be used for mapping 
+local objCounter = 0 
+local function GetObjectId() 
+    objCounter = objCounter + 1
+    return objCounter
+end
+
+--[[ ------------------------------ ]]
+--[[ -- Internal - Position Icon -- ]]
+--[[ ------------------------------ ]]
+
+LibFloatingIcons.internal.positionIcon = {}
+local PositionIcon = LibFloatingIcons.internal.positionIcon
 
 
-function Handler:New(addon, name, position, texture) 
-    local obj = setmetatable( {}, Handler)
+function PositionIcon:OnZoneChange( oldZone, newZone )
 
-    --- position *table*:nilable
-    -- defines zone, world position, vertical offset 
+    PositionIcon:ClearRenderList() 
 
-    --- texture *table*:nilable 
-    -- defines, texture, color, size for default texture (simple usecase) 
+    local SubRegistry = self.registry[newZone] 
+    if not SubRegistry then return end 
 
-    local ctrl = WM:CreateControl( name.."ctrl", LFI.window, CT_CONTROL) 
-    ctrl:ClearAnchors()
-    ctrl:SetAnchor( BOTTOM, Window, CENTER, 0, 0)
-    ctrl:SetHidden(false) 
+    for sn, obj in pairs( SubRegistry ) do 
+        if obj.enabled then 
+            self:AddToRenderList( obj ) 
+        end
+    end
+end
 
-    local icon = WM:CreateControl( name.."_Icon", ctrl, CT_TEXTURE)
+
+function PositionIcon:GetLibraryIconDefaults() 
+    return {
+        texture = "/esoui/art/icons/achievement_u30_groupboss6.dds", 
+        width = 50, 
+        height = 50, 
+        color = {1,1,1}, 
+        desaturation = 1, 
+        offsetX = 0,
+        offsetY = 0, 
+    }
+end
+
+
+--[[ Registry ]]
+PositionIcon.registry = {}
+
+function PositionIcon:RegisterObject( obj )
+    local zone = obj.zone  
+    if not self.registry[zone] then self.registry[zone] = {} end    -- initialize zone-specific subregistry table
+    self.registry[zone][obj.sn] = obj -- add object to subregistry
+
+    --- check current zone
+    if zone == LFI.zone then  
+        if obj.enabled then self:AddToRenderList( obj ) end -- add obj to render list if it is in current zone and enabled 
+    else
+        obj.rootCtrl:SetHidden(true) -- ensure obj is hidden when in different zone
+    end
+end
+
+
+function PositionIcon:UnregisterObject( obj )
+   self.registry[obj.zone][obj.sn] = nil  
+end
+
+
+--[[ Render List ]]
+PositionIcon.renderList = {}
+
+function PositionIcon:AddToRenderList( obj ) 
+    self.renderList[obj.sn] = obj
+    obj.rootCtrl:SetHidden(false)  
+end
+
+function PositionIcon:ClearRenderList() 
+    for _, obj in pairs( self.renderList ) do 
+        self:RemoveFromRenderList( obj ) 
+    end
+end
+
+function PositionIcon:RemoveFromRenderList( obj )
+    obj.rootCtrl:SetHidden(true)  -- to ensure it is not rendered anymore 
+    self.renderList[obj.sn] = nil 
+end
+
+
+
+
+
+--[[ ------------------------- ]]
+--[[ -- PositionIcon Object -- ]]
+--[[ ------------------------- ]]
+
+local Object = {}
+
+function Object:New(...) 
+    local obj = {} 
+    setmetatable( obj, self)
+    self.__index = self
+
+    obj.id = GetObjectId() 
+
+    local name = "LFI_PositionIcon"..tostring(obj.id) 
+
+    local rootCtrl = WM:CreateControl( name.."_rootCtrl", LFI.window, CT_CONTROL) 
+    rootCtrl:ClearAnchors()
+    rootCtrl:SetAnchor( BOTTOM, Window, CENTER, 0, 0)
+    obj.rootCtrl = rootCtrl 
+
+    local icon = WM:CreateControl( name.."_Icon", rootCtrl, CT_TEXTURE)
     icon:ClearAnchors()
-    icon:SetAnchor( CENTER, ctrl, CENTER, 0, 0)
-    icon:SetTextureReleaseOption(RELEASE_TEXTURE_AT_ZERO_REFERENCES) 
-    icon:SetTexture( GetAbilityIcon(112323) )
-    icon:SetDimensions(50,50)
+    icon:SetAnchor( CENTER, rootCtrl, CENTER, 0, 0)
+    obj.icon = icon 
 
-    obj.addon = addon
-    obj.name = name 
-    obj.ctrl = ctrl 
-
-    obj.position = {position.x, position.y, position.z}
-    
-    -- create a control to the top level window 
-    -- create a texture control 
-
-    --- need some sort of list, where the library keeps track of all the handler 
+    obj:Initialize(...) 
 
     return obj
 end
 
-function Handler:GetPosition() 
-    return self.position
+
+function Object:Initialize( Handler, name, zone, initValues ) 
+    self.handlerName = Handler.name 
+    self.name = name 
+    self.zone = zone
+    self.sn = GetSerialNumber() 
+
+    local defaults = Handler:GetPositionIconDefault()
+
+    local function _optVar( varName ) 
+        return initValues[varName] or defaults[varName] 
+    end
+
+    local function _reqVar( varName) 
+
+    end
+        self.verticleOffset = 0
+    if LFI.util.IsTable(initValues) then
+        ---ToDO check for coordinates (required fields) 
+        self.x = initValues.x 
+        self.y = initValues.y 
+        self.z = initValues.z     
+        ---ToDO apply icon properties (optional fields) or use default values 
+        self.icon:SetTexture( _optVar("texture") )
+        self.icon:SetDimensions( _optVar("width"), _optVar("height") )
+        self.icon:SetHidden(false) 
+    else 
+        self.rootCtrl:SetHidden(true)
+        self.enabled = false 
+    end
+
+    if LFI.debug then 
+        LFI.debugMsg("PositionIcon", zo_strformat("Registered Object: <<1>> by Handler: <<2>>", LFI.util.ColorString(self.name, "orange"), LFI.util.ColorString(self.handlerName, "orange") )  )
+    end 
+
 end
 
-function Handler:GetCtrl() 
-    return self.ctrl 
+
+function Object:Release() 
+    PositionIcon:UnregisterObject( self )   -- remove from registry 
+    self:Disable() -- remove icon from renderList and hide it
+
+    self.sn = nil
+    self.zone = nil 
+    self.name = nil 
+    self.handlerName = nil 
+
 end
 
 
-
--- function like this to adjust the predefined texture 
-function Handler:SetTexture() 
-
+function Object:Enable() 
+    self.enabled = true 
+    if LFI.zone == self.zone then 
+        PositionIcon:AddToRenderList( self ) 
+    end
 end
 
 
-
-
---- advanced display option 
--- you add your controls here and can build your own display 
--- since you have the ctrl, you can do all kind of fancy stuff that do not need to be covered by the library 
-function Handler:AddControl( ctrlType )
-    --- need to determine name 
-    --- potentially some objPool aspect? 
-    local ctrl = WM:CreateControl( name, self.ctrl, ctrlType ) --- can probably use a template control here, where i removed all the functions i dont want 
-    ctrl:ClearAnchors() 
-    ctrl:SetAnchor( CENTER, self.ctrl, CENTER )
-    --- have to save the ctrl somewhere?!
-    return ctrl 
+function Object:Disable() 
+    self.enabled = false 
+    PositionIcon:RemoveFromRenderList( self ) 
 end
 
 
---[[ ----------------- ]]
---[[ -- Moving Icon -- ]] -- Dynamic Icon 
---[[ ----------------- ]] 
+--[[ Getter Functions ]]
 
--- flag to set a icon dynamic. this adds the constant position check. 
-
--- feature to define a path for the icon to move along 
-
---- define starting position 
---- define end position 
---- define midway points 
---- define time points for each waypoint 
--- define total duration in seconds, then all position in between are relativ with end position value = 1 
-
---- function for start animation 
---- need to define how icon behaves outside of animation (probably need different name to prevent confusion) 
-
---[[ internally, i just need to update the current position ]]
+function Object:GetRootControl() 
+    return self.rootCtrl 
+end
 
 
---position = {zone, x, y, z, activeState} 
---icon = {texture, size, color, }
+function Object:GetIconControl() 
+    return self.icon
+end
 
 
-function LFI.RegisterPositionIcon( addon, name, position, icon )
-    local obj = Handler:New( addon, name, position, icon )  
-    table.insert(LFI.activePositionIcons, obj)
+--[[ Setter Functions ]]
+
+function Object:SetCoordinates(x,y,z)
+    if x then self.x = x end 
+    if y then self.y = y end 
+    if z then self.z = z end 
+end
+
+function Object:SetVerticleOffset( offset ) 
+    self.verticleOffset = offset
+end
+
+
+--[[ Direct Control for Basic Icon ]] 
+
+function Object:SetIconTexture( texture ) 
+    self.icon:SetTexture( texture ) 
+end
+
+function Object:SetIconDimensions( width, height ) 
+    self.icon:SetDimensions( width, height ) 
+end
+
+function Object:SetIconOffset( offsetX, offsetY ) 
+    self.icon:SetAnchor(CENTER, self.rootCtrl, CENTER, offsetX, offsetY )
+end
+
+function Object:SetIconColor( r,g,b,a )
+    self.icon:SetColor( r,g,b, a or 1 )
+end
+
+function Object:setIconDesaturation( desaturation ) 
+    self.icon:SetDesaturation( desaturation )
+end
+
+
+--[[ ------------------------ ]]
+--[[ -- LFI Object Handler -- ]]
+--[[ ------------------------ ]]
+
+LFI.handler = LFI.handler or {}
+local Handler = LFI.handler 
+
+local ObjPool = {} 
+local function GetObject(...) 
+    local obj  
+    if ZO_IsTableEmpty(ObjPool) then 
+        obj = Object:New(...)  
+    else 
+        obj = ObjPool[#ObjPool] 
+        ObjPool[#ObjPool] = nil  
+        obj:Initialize(...) 
+    end
+    return obj
+end
+
+--- initValues = {
+-- x *number*; required
+-- y *number*; required 
+-- z *number*; required  
+-- size *table* {width, height}; default = ??? 
+-- texture *string*; default = ??? 
+-- color *table* {r,g,b}; default={1,1,1}
+-- enabled *bool*; default = ???  
+-- desaturation 
+-- verticleoffset
+--- }
+
+function Handler:RegisterPositionIcon( name, zone, initValues )
+    if not name then return end 
+
+    if self.positionIconVault[name] then -- positionIcon name must be unique within one handler
+        return 
+    end 
+
+    if not zone then return end 
+
+    local obj = GetObject( self, name, zone, initValues ) 
+    PositionIcon:RegisterObject( obj ) 
     return obj 
-    --- i need to provide a subclass only with the things that i want to have exposed 
 end
+
+
+function Handler:SetPositionIconDefault( param, default )
+    self.positionIconDefault[param] = default 
+end
+
+
+function Handler:ResetPositionIconDefault( param ) 
+    self.positionIconDefault[param] = nil 
+end
+
+
+function Handler:GetPositionIconDefault() 
+    return self.positionIconDefault
+end
+

@@ -1,9 +1,13 @@
 LibFloatingIcons = LibFloatingIcons or {}
 
-local LFI = LibFloatingIcons
+LibFloatingIcons.internal = LibFloatingIcons.internal or {}
 
 
-function LFI.OnUpdate()   
+
+local LFI = LibFloatingIcons.internal
+
+
+function LFI.OnUpdate()  
 
     --- using LFI variables 
     local RenderSpace = LFI.renderSpace
@@ -44,8 +48,7 @@ function LFI.OnUpdate()
     local basicAlpha = 1
 
     --- calculation of position for each icon 
-    local function UpdateIcon(ctrl, coord, offset)
-        local wX, wY, wZ = coord[1], coord[2], coord[3]
+    local function UpdateIcon(ctrl, wX, wY, wZ, offset) 
         wY = wY + offset
 
         -- calculate unit view position
@@ -79,14 +82,13 @@ function LFI.OnUpdate()
         ctrl:SetAlpha( fade )
     end
 
-    --- update icons for positions
-
-    for _,handler in ipairs(LFI.activePositionIcons) do   
-        local pos = handler:GetPosition() 
-        local ctrl = handler:GetCtrl()
-        UpdateIcon(ctrl, pos, 100)
+    --- render position icons 
+    for _,obj in pairs( LFI.positionIcon.renderList ) do   
+        UpdateIcon(obj.rootCtrl, obj.x, obj.y, obj.z, obj.verticleOffset)
     end
     
+
+
     -- sort draw order
     if zTotal > 1 then
         local keys = { }
