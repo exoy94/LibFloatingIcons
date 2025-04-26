@@ -9,9 +9,6 @@ LFI.handler = LFI.handler or {}
 local Handler = LFI.handler 
 
 
-
-
-
 function Handler:GetPositionObjects() 
     return self.positionObjectVault
 end
@@ -21,24 +18,20 @@ local libraryPositionObjectDefaults = {
     x = 0, 
     y = 0, 
     z = 0, 
-    enabled = true, 
+    enabled = false, 
     hidden = true, 
-    offset = 100, 
+    offset = 0, 
 }
-
-
-
 
 
 --[[ Icon Templates ]] 
 
 local libraryIconTemplateDefault = {
     texture = "/esoui/art/icons/achievement_u30_groupboss6.dds", 
-    width = 50, 
-    height = 50, 
-    hidden = false,
+    width = 0, 
+    height = 0, 
+    hidden = true,
     color = {1,1,1}, 
-    desaturation = 1, 
     offsetX = 0,
     offsetY = 0,
 }

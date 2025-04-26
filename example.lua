@@ -7,7 +7,7 @@
 -- The motivation of LibFloatingIcons is to move the widely used capabilities of OdySupportIcons in a standalone library. 
 -- This way I can optimize for usage by multiple parties and seperate adding some new features to OSI and working on the 
 -- performance of LFI. This will also bring the option for icons to console with u46. (Maybe there will also be a console version
--- of OSI at some point, but I dont know yet). Moreover, there will be changes to the vanilla api with U47 confirmed by zos. 
+-- of OSI at some point, but I dont know yet). 
 
 --- Main focus of this library is: 
 -- 1. easy to use api, if you just want to use the lib the same way you use OSI now 
