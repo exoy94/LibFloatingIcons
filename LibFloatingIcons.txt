@@ -14,9 +14,10 @@ lang/en.lua
 lang/$(language).lua
 
 
-render/legacy.lua
+render/inverseCameraMatrixLegacy.lua
 
 modules/slashCommands.lua
+modules/menu.lua
 
 objects/handler.lua
 objects/position.lua

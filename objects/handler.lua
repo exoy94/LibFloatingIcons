@@ -10,16 +10,12 @@ local Handler = LFI.handler
 
 
 
+
+
 function Handler:GetPositionObjects() 
     return self.positionObjectVault
 end
 
---[[ Position Icon Default ]]
-
-
-function Handler:GetPositionObjectDefault() 
-    return self.positionObjectDefault
-end
 
 local libraryPositionObjectDefaults = {
     x = 0, 
@@ -53,6 +49,8 @@ end
 function Handler:GetIconTemplate( name ) 
     return self.iconTemplates[name] or libraryIconTemplateDefault
 end
+
+
 
 
 

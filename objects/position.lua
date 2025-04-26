@@ -151,13 +151,12 @@ function Object:New(...)
     obj:Initialize(...) 
 
     obj.renderOpt = {
-        algorithm = "CameraMatrixInverse_Legacy", 
         scaling = true, 
         fadeout = true, 
         fadedist = 1, 
         baseAlpha = 1
     }
-
+    
     return obj
 end
 
@@ -168,8 +167,6 @@ function Object:Initialize( Handler, objName, zone, objOpt, iconOpt )
     self.zone = zone
     self.sn = GetSerialNumber() 
 
-
-    ExoYTest1 = objOpt
     --- object data 
     self.data = {}
 
@@ -178,7 +175,6 @@ function Object:Initialize( Handler, objName, zone, objOpt, iconOpt )
     for key, value in pairs(objOpt) do 
         self.data[key] = value
     end
-    ExoYTest2 = self.data
 
     self.controls.rootCtrl:SetHidden( self.data["hidden"] )
 

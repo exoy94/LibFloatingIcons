@@ -7,7 +7,7 @@ local EM = GetEventManager()
 local WM = GetWindowManager()
  
 LFI.name = "LibFloatingIcons"
-
+LFI.version = "0.2"
 
 --[[ ------------- ]]
 --[[ -- Utility -- ]]
@@ -86,6 +86,8 @@ end
 
 local function OnPlayerActivated() 
 
+    
+
     local newZone = GetZoneId(GetUnitZoneIndex("player")) 
     if newZone ~= LFI.zone then 
         --if LFI.debug then 
@@ -108,7 +110,7 @@ local function OnInitialPlayerActivated()
     LFI.positionObjects:AddZoneToRenderList( LFI.zone )   
     LFI.playerActivated = true 
     
-    LFI.OnUpdate() -- prevent obj to shortly pop up on the middle of the screen on reload
+    LFI.OnUpdate() -- prevents objs to shortly pop-up on cneter screen after reload
     EM:RegisterForUpdate( LFI.name, 10, LFI.OnUpdate )
     EM:RegisterForEvent( LFI.name, EVENT_PLAYER_ACTIVATED, OnPlayerActivated)
 end
@@ -129,7 +131,6 @@ local function Initialize()
 
     LFI.handlerVault = {}
 
-    LFI.store.debug = true
     LFI.debug = LFI.store.debug 
 
     LFI.playerActivated = false 
@@ -160,6 +161,8 @@ local function Initialize()
 
     EM:RegisterForEvent(LFI.name, EVENT_PLAYER_ACTIVATED, OnInitialPlayerActivated) 
     
+    LFI:CreateMenu()
+
     LFI.initialized = true
 end
 
