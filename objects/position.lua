@@ -196,20 +196,6 @@ function Object:Initialize( Handler, objName, zone, objOpt, iconOpt )
 end
 
 
-
-function Object:Release() 
-      
-    self:Disable() -- remove icon from renderList and hide it
-
-    self.sn = nil
-    self.zone = nil 
-    self.name = nil 
-    self.handlerName = nil 
-
-    PositionObject:UnregisterObject( self )
-end
-
-
 function Object:Enable() 
     self.data.enabled = true 
     if LFI.zone == self.zone then 
@@ -310,7 +296,15 @@ end
 
 
 function Handler:RemovePositionObject( obj ) 
-    ---ToDO 
+
+    self.positionObjectVault[obj.objName] = nil 
+    obj:Disable() 
+    obj.sn = nil 
+    obj.zone = nil 
+    obj.objName = nil 
+    obj.handlerName = nil 
+
+    PositionObject:UnregisterObject( obj) 
 end
 
 
