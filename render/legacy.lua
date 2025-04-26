@@ -42,13 +42,13 @@ function LFI.OnUpdate()
     local zTotal = 0
 
     --- defaults 
-    local scaling = true 
-    local fadeout = true 
-    local fadedist = 1 
-    local basicAlpha = 1
+    --local scaling = true 
+    --local fadeout = true 
+    --local fadedist = 1 
+    --local basicAlpha = 1
 
     --- calculation of position for each icon 
-    local function UpdateIcon(ctrl, wX, wY, wZ, offset) 
+    local function UpdateIcon(ctrl, wX, wY, wZ, offset, renderOpt) 
         wY = wY + offset
 
         -- calculate unit view position
@@ -70,11 +70,11 @@ function LFI.OnUpdate()
         local dist       = 1 + zo_sqrt( dX * dX + dY * dY + dZ * dZ )
 
         -- calculate scale 
-        local scale = scaling and 1000 / dist or 1
+        local scale = renderOpt.scaling and 1000 / dist or 1
 
         -- calculate alpha 
-        local alpha = fadeout and zo_clampedPercentBetween( 1, fadedist * 100, dist ) or 1
-        local fade = basicAlpha * alpha * alpha  
+        local alpha = renderOpt.fadeout and zo_clampedPercentBetween( 1, renderOpt.fadedist * 100, dist ) or 1
+        local fade = renderOpt.basicAlpha * alpha * alpha  
 
         -- apply settings to control 
         ctrl:SetAnchor(BOTTOM, Window, CENTER, x, y)
@@ -84,7 +84,7 @@ function LFI.OnUpdate()
 
     --- render position icons 
     for _,obj in pairs( LFI.positionIcon.renderList ) do   
-        UpdateIcon(obj.rootCtrl, obj.x, obj.y, obj.z, obj.verticleOffset)
+        UpdateIcon(obj.rootCtrl, obj.x, obj.y, obj.z, obj.verticleOffset, obj.renderOpt)
     end
     
 

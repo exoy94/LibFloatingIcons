@@ -9,24 +9,11 @@ local WM = GetWindowManager()
 LFI.name = "LibFloatingIcons"
 
 
---[[ ----------- ]]
---[[ -- Debug -- ]] 
---[[ ----------- ]]
-
-function LFI.debugMsg(title, msg) 
-    
-    if LibExoYsUtilities then 
-        LibExoYsUtilities.Debug(msg, {"LFI-"..title, "cyan"} ) 
-    else 
-        d( zo_strformat("[<<1>> <<2>> - <<3>>] <<4>>", GetTimeString(), LFI.util.ColorString("LFI", "green"), LFI.util.ColorString(title, "cyan"), msg) )  
-    end
-end
-
 --[[ ------------- ]]
 --[[ -- Utility -- ]]
 --[[ ------------- ]]
 
-LFI.util = {}
+LFI.util = LFI.util or {}
 local Util = LFI.util 
 
 function Util.IsTable( t ) 
@@ -38,6 +25,9 @@ function Util.ColorString(str, colorName)
       ["green"] = "00ff00",  
       ["orange"] = "ff8800", 
       ["cyan"] = "00ffff", 
+      ["gray"] = "8f8f8f",
+      ["white"] = "ffffff",
+      ["red"] = "ff0000", 
     }
     local colorHex = colorList[colorName]
     if colorHex then 
@@ -47,42 +37,69 @@ function Util.ColorString(str, colorName)
     end
   end
 
+
+
+--[[ ----------- ]]
+--[[ -- Debug -- ]] 
+--[[ ----------- ]]
+
+function LFI.debugMsg(title, msg) 
+    
+    local titleStr, titleColor
+    if Util.IsTable(title) then 
+        titleStr = title[1] 
+        titleColor = title[2]
+    else 
+        titleStr = title 
+        titleColor = "cyan" 
+    end
+
+    local header = "LFI"
+    if titleStr then 
+        header = header.." - "..titleStr
+    end
+
+    if LibExoYsUtilities then 
+        LibExoYsUtilities.Debug(msg, {header, titleColor} ) 
+    else 
+        d( zo_strformat("[<<1>> <<2>>] <<3>>", Util.ColorString(GetTimeString(), "gray"), Util.ColorString(header, titleColor), msg) )  
+    end
+end
+
+
 --[[ ------------ ]]
 --[[ -- Events -- ]]
 --[[ ------------ ]]
 
-local function OnZoneChange( oldZone, newZone )
-    
-    if LFI.debug then 
-        LFI.debugMsg("ZoneChange", zo_strformat("<<1>> (<<2>>) -> <<3>> (<<4>>)", LFI.util.ColorString(GetZoneNameById(oldZone), "orange"), oldZone, LFI.util.ColorString(GetZoneNameById(newZone), "orange"), newZone )  )
-    end  
-    LFI.positionIcon:OnZoneChange( oldZone, newZone ) 
-    LFI.zone = newZone
- 
-end
-
-
-
 local function OnPlayerActivated() 
-    local zone = GetZoneId(GetUnitZoneIndex("player")) 
-    if zone ~= LFI.zone then 
-        OnZoneChange( LFI.zone, zone ) 
+
+    local newZone = GetZoneId(GetUnitZoneIndex("player")) 
+    if newZone ~= LFI.zone then 
+        --if LFI.debug then 
+        --    LFI.debugMsg("ZoneChange", zo_strformat("<<1>> (<<2>>) -> <<3>> (<<4>>)", 
+        --    Util.ColorString(GetZoneNameById(LFI.zone), "orange"), LFI.zone, 
+        --    Util.ColorString(GetZoneNameById(newZone), "orange"), newZone )  )
+        --end  
+        LFI.positionIcon:OnZoneChange( LFI.zone, newZone ) 
+        LFI.zone = newZone
     end 
 end
 
 
 local function OnInitialPlayerActivated() 
+
     EM:UnregisterForEvent( LFI.name, EVENT_PLAYER_ACTIVATED)
     
     LFI.zone = GetZoneId(GetUnitZoneIndex("player"))
-    OnZoneChange(0, LFI.zone)
+ 
+    LFI.positionIcon:AddZoneToRenderList( LFI.zone )   
+    LFI.playerActivated = true 
+    
 
     EM:RegisterForUpdate( LFI.name, 10, LFI.OnUpdate )
-
     EM:RegisterForEvent( LFI.name, EVENT_PLAYER_ACTIVATED, OnPlayerActivated)
-
-
 end
+
 
 --[[ ---------------- ]]
 --[[ -- Initialize -- ]] 
@@ -90,9 +107,20 @@ end
 
 local function Initialize() 
 
-    LFI.debug = true
+    local storeDefault = {
+        debug = false
+
+    }
+
+    LFI.store = ZO_SavedVars:NewAccountWide("LibFloatingIconsSavedVariables", 0, nil, storeDefault)
+
     LFI.handlerVault = {}
-    
+
+    LFI.store.debug = true
+    LFI.debug = LFI.store.debug 
+
+    LFI.playerActivated = false 
+
     local RenderSpace = WM:CreateControl("LFI_RenderSpace", GuiRoot, CT_CONTROl)
     RenderSpace:SetAnchorFill( GuiRoot )
     RenderSpace:Create3DRenderSpace() 
@@ -134,40 +162,6 @@ EM:RegisterForEvent(LFI.name, EVENT_ADD_ON_LOADED, OnAddonLoaded)
 
 
 
---[[ Handler ]]
-
-LFI.handler = LFI.handler or {}
-local Handler = LFI.handler 
-
-function Handler:ToggleDebug() 
-    self.debug = not self.debug 
-
-end
 
 
---[[ Exposed Functions   ]]
 
-function LibFloatingIcons:RegisterHandler( handlerName ) 
-
-    if LFI.handlerVault[handlerName] then 
-        LFI.debugMsg("Error", zo_strformat("Duplicate Handler Registration: <<1>>", Util.ColorString(handlerName, "orange") ) )
-        return 
-    end
-
-    local Meta = self.internal.handler
-    local Handler = {}
-    setmetatable( Handler, {__index = Meta} )
-
-    Handler.name = handlerName
-    Handler.debug = true
-
-    --- PositionIcon - Specific 
-    Handler.positionIconDefault = {}
-    setmetatable(Handler.positionIconDefault, {__index = LFI.positionIcon:GetLibraryIconDefaults() })
-
-    Handler.positionIconVault = {}
-
-
-    LFI.handlerVault[handlerName] = Handler 
-    return Handler
-end

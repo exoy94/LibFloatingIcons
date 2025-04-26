@@ -5,7 +5,7 @@
 ## Author: @|c00FF00ExoY|r94 (PC/EU)
 ## IsLibrary: true
 ## Description: Icons floating everywhere. 
-## SavedVariables: LFI_SV
+## SavedVariables: LibFloatingIconsSavedVariables
 
 ## DependsOn: LibAddonMenu-2.0>=34
 ## OptionalDependsOn: LibExoYsUtilities
@@ -16,7 +16,11 @@ lang/$(language).lua
 
 render/legacy.lua
 
+modules/slashCommands.lua
+
+objects/libraryHandler.lua
 objects/positionIcon.lua
+
 
 
 LibFloatingIcons.lua
