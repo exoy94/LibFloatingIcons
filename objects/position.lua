@@ -310,9 +310,7 @@ end
 
 
 function Handler:RemovePositionObject( obj ) 
-
     ---ToDO 
-
 end
 
 

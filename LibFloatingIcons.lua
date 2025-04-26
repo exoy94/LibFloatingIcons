@@ -122,17 +122,12 @@ end
 
 local function Initialize() 
 
-    local storeDefault = {
-        debug = false
+    local storeDefault = {debug = false}
 
-    }
-
-    LFI.store = ZO_SavedVars:NewAccountWide("LibFloatingIconsSavedVariables", 0, nil, storeDefault)
-
+    --LFI.store = ZO_SavedVars:NewAccountWide("LibFloatingIconsSavedVariables", 0, nil, storeDefault)
     LFI.handlerVault = {}
-
-    LFI.debug = LFI.store.debug 
-
+    --LFI.debug = LFI.store.debug 
+    LFI.debug = true
     LFI.playerActivated = false 
 
     local RenderSpace = WM:CreateControl("LFI_RenderSpace", GuiRoot, CT_CONTROl)
@@ -160,9 +155,8 @@ local function Initialize()
     LOOT_SCENE:AddFragment( LFI.sceneFrag )
 
     EM:RegisterForEvent(LFI.name, EVENT_PLAYER_ACTIVATED, OnInitialPlayerActivated) 
-    
-    LFI:CreateMenu()
 
+    --LFI:CreateMenu()
     LFI.initialized = true
 end
 

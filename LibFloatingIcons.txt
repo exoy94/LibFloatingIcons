@@ -10,10 +10,6 @@
 ## DependsOn: LibAddonMenu-2.0>=34
 ## OptionalDependsOn: LibExoYsUtilities
 
-lang/en.lua
-lang/$(language).lua
-
-
 render/inverseCameraMatrixLegacy.lua
 
 modules/slashCommands.lua
