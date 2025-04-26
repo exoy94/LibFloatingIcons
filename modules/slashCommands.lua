@@ -5,10 +5,14 @@ LFI.util = LFI.util or {}
 local Util = LFI.util
 
 
-local function PrintBool( var, colorCoded) 
+local function PrintBool( var, colorCoded, negatory) 
   local str = var and "true" or "false" 
   if colorCoded then 
-    return Util.ColorString(str, var and "green" or "red") 
+    if negatory then
+      return Util.ColorString(str, var and "red" or "green") 
+    else 
+      return Util.ColorString(str, var and "green" or "red") 
+    end
   else 
     return str
   end
@@ -49,7 +53,7 @@ SLASH_COMMANDS["/lfi"] = function( input )
     elseif cmd == "renderlist" then 
       local renderList = {}
       if param[1] == "position" then 
-        renderList = LFI.positionIcon.renderList 
+        renderList = LFI.positionObjects.renderList 
       end
       local num = 0 
       for _,_ in pairs(renderList) do 
@@ -59,14 +63,14 @@ SLASH_COMMANDS["/lfi"] = function( input )
         Util.ColorString(param[1].."Icons", "orange"),
         Util.ColorString(num, "white") ) )
       for _,obj in pairs(renderList) do 
-          d( zo_strformat("<<1>> (sn=<<2>>) from <<3>>", obj.name, obj.sn, obj.handlerName)  )
+          d( zo_strformat("<<1>> (sn=<<2>>) from <<3>>", obj.objName, obj.sn, obj.handlerName)  )
       end
       d( Util.ColorString("--------------------------------------------------", "gray") )
 
     elseif cmd == "registry" then 
       local registry = {}
       if param[1] == "position" then 
-        registry = LFI.positionIcon.registry 
+        registry = LFI.positionObjects.registry 
       end  
       LFI.debugMsg("Dev", zo_strformat("Registry for <<1>>:", Util.ColorString(param[1].."Icons", "orange")))
       for zone, subRegistry in pairs(registry) do 
@@ -78,8 +82,8 @@ SLASH_COMMANDS["/lfi"] = function( input )
         Util.ColorString(GetZoneNameById(zone), "orange"), zone, Util.ColorString(num, "white") ) )
         for _,obj in pairs(subRegistry) do 
           d( zo_strformat(".     <<1>> (sn=<<2>>) from <<3>> (enabled=<<4>>,  hidden=<<5>>) ", 
-          Util.ColorString(obj.name, "orange"), obj.sn, Util.ColorString(obj.handlerName, "white"), 
-          PrintBool(obj.enabled, true), PrintBool( obj.rootCtrl:IsHidden(), true)  ) )
+          Util.ColorString(obj.objName, "orange"), obj.sn, Util.ColorString(obj.handlerName, "white"), 
+          PrintBool(obj.data.enabled, true), PrintBool( obj.controls.rootCtrl:IsHidden(), true, true)  ) )
         end
       end
       d( Util.ColorString("--------------------------------------------------", "gray") )

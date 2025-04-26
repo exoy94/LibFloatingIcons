@@ -41,12 +41,6 @@ function LFI.OnUpdate()
     local zOrder = {}
     local zTotal = 0
 
-    --- defaults 
-    --local scaling = true 
-    --local fadeout = true 
-    --local fadedist = 1 
-    --local basicAlpha = 1
-
     --- calculation of position for each icon 
     local function UpdateIcon(ctrl, wX, wY, wZ, offset, renderOpt) 
         wY = wY + offset
@@ -74,7 +68,7 @@ function LFI.OnUpdate()
 
         -- calculate alpha 
         local alpha = renderOpt.fadeout and zo_clampedPercentBetween( 1, renderOpt.fadedist * 100, dist ) or 1
-        local fade = renderOpt.basicAlpha * alpha * alpha  
+        local fade = renderOpt.baseAlpha * alpha * alpha  
 
         -- apply settings to control 
         ctrl:SetAnchor(BOTTOM, Window, CENTER, x, y)
@@ -83,8 +77,9 @@ function LFI.OnUpdate()
     end
 
     --- render position icons 
-    for _,obj in pairs( LFI.positionIcon.renderList ) do   
-        UpdateIcon(obj.rootCtrl, obj.x, obj.y, obj.z, obj.verticleOffset, obj.renderOpt)
+    for _,obj in pairs( LFI.positionObjects.renderList ) do   
+        local data = obj.data 
+        UpdateIcon(obj.controls.rootCtrl, data.x, data.y, data.z, data.offset, obj.renderOpt)
     end
     
 

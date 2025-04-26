@@ -18,8 +18,8 @@ render/legacy.lua
 
 modules/slashCommands.lua
 
-objects/libraryHandler.lua
-objects/positionIcon.lua
+objects/handler.lua
+objects/position.lua
 
 
 

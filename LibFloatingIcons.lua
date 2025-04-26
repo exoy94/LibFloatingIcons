@@ -20,6 +20,19 @@ function Util.IsTable( t )
     return type(t) == "table"
 end
 
+function Util.IsString( s ) 
+    return type(s) == "string" 
+end
+
+function Util.IsNumber( n ) 
+    return type(n) == "number" 
+end 
+
+function Util.IsNil( v ) 
+    return type(v) == "nil" 
+end
+
+
 function Util.ColorString(str, colorName) 
     local colorList = {
       ["green"] = "00ff00",  
@@ -80,7 +93,7 @@ local function OnPlayerActivated()
         --    Util.ColorString(GetZoneNameById(LFI.zone), "orange"), LFI.zone, 
         --    Util.ColorString(GetZoneNameById(newZone), "orange"), newZone )  )
         --end  
-        LFI.positionIcon:OnZoneChange( LFI.zone, newZone ) 
+        LFI.positionObjects:OnZoneChange( LFI.zone, newZone ) 
         LFI.zone = newZone
     end 
 end
@@ -92,10 +105,10 @@ local function OnInitialPlayerActivated()
     
     LFI.zone = GetZoneId(GetUnitZoneIndex("player"))
  
-    LFI.positionIcon:AddZoneToRenderList( LFI.zone )   
+    LFI.positionObjects:AddZoneToRenderList( LFI.zone )   
     LFI.playerActivated = true 
     
-
+    LFI.OnUpdate() -- prevent obj to shortly pop up on the middle of the screen on reload
     EM:RegisterForUpdate( LFI.name, 10, LFI.OnUpdate )
     EM:RegisterForEvent( LFI.name, EVENT_PLAYER_ACTIVATED, OnPlayerActivated)
 end
@@ -138,12 +151,12 @@ local function Initialize()
     Window:SetDrawLevel( 0 )
     LFI.window = Window
 
-
     -- create parent window scene fragment
     local frag = ZO_HUDFadeSceneFragment:New( Window )
-	HUD_UI_SCENE:AddFragment( frag )
-    HUD_SCENE:AddFragment( frag )
-    LOOT_SCENE:AddFragment( frag )
+    LFI.sceneFrag = frag
+    HUD_UI_SCENE:AddFragment( LFI.sceneFrag )
+    HUD_SCENE:AddFragment( LFI.sceneFrag )
+    LOOT_SCENE:AddFragment( LFI.sceneFrag )
 
     EM:RegisterForEvent(LFI.name, EVENT_PLAYER_ACTIVATED, OnInitialPlayerActivated) 
     

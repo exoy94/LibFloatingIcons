@@ -11,48 +11,47 @@ local Handler = LFI.handler
 
 
 function Handler:GetPositionObjects() 
-    return self.positionIconVault
+    return self.positionObjectVault
 end
 
 --[[ Position Icon Default ]]
-
-
-function Handler:SetPositionIconDefault( param, default )
-    self.positionIconDefault[param] = default 
-end
-
-
-function Handler:ResetPositionIconDefault( param ) 
-    self.positionIconDefault[param] = nil 
-end
-
-
-function Handler:GetPositionIconDefault() 
-    return self.positionIconDefault
-end
-
-
 
 
 function Handler:GetPositionObjectDefault() 
     return self.positionObjectDefault
 end
 
+local libraryPositionObjectDefaults = {
+    x = 0, 
+    y = 0, 
+    z = 0, 
+    enabled = true, 
+    hidden = true, 
+    offset = 100, 
+}
 
 
 --[[ Icon Templates ]] 
 
-local libraryIconTemplateDefault = { 
-
-
-
+local libraryIconTemplateDefault = {
+    texture = "/esoui/art/icons/achievement_u30_groupboss6.dds", 
+    width = 50, 
+    height = 50, 
+    hidden = false,
+    color = {1,1,1}, 
+    desaturation = 1, 
+    offsetX = 0,
+    offsetY = 0,
 }
 
 function Handler:DefineIconTemplate( name, opt )
-    
-    self.iconTemplate[name] = opt 
-    setmetatable(self.iconTemplate, {__index = libraryIconTemplateDefault } ) 
+    opt = opt or {}
+    self.iconTemplates[name] = opt 
+    setmetatable(self.iconTemplates[name], {__index = libraryIconTemplateDefault } ) 
+end
 
+function Handler:GetIconTemplate( name ) 
+    return self.iconTemplates[name] or libraryIconTemplateDefault
 end
 
 
@@ -67,27 +66,21 @@ function LibFloatingIcons:RegisterHandler( handlerName )
     end
 
     local Meta = self.internal.handler
-    local Handler = {}
-    setmetatable( Handler, {__index = Meta} )
+    local NewHandler = {}
+    setmetatable( NewHandler, {__index = Meta} )
 
-    Handler.name = handlerName
+    NewHandler.name = handlerName
 
     --- PositionIcon - Specific 
-    Handler.positionIconDefault = {}
-    setmetatable(Handler.positionIconDefault, {__index = LFI.positionIcon:GetLibraryIconDefaults() })
+    NewHandler.positionObjectDefaults = {}
+    setmetatable(NewHandler.positionObjectDefaults, {__index = libraryPositionObjectDefaults} )
 
-    Handler.positionObjectDefault = {}
-    setmetatable(Handler.positionObjectDefault, {__index = LFI.positionIcon:GetLibraryObjectDefaults() })
-
-    Handler.positionRenderDefault = {} 
-    setmetatable(Handler.positionRenderDefault, {__index = LFI.positionIcon:GetLibraryRenderDefaults() })
-
-    Handler.positionIconVault = {}
-    Handler.iconTemplate = {}
+    NewHandler.positionObjectVault = {}
+    NewHandler.iconTemplates = {}
 
 
-    LFI.handlerVault[handlerName] = Handler 
-    return Handler
+    LFI.handlerVault[handlerName] = NewHandler 
+    return NewHandler
 end
 
 
