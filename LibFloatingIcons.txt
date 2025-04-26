@@ -7,7 +7,7 @@
 ## Description: Icons floating everywhere. 
 ## SavedVariables: LibFloatingIconsSavedVariables
 
-## DependsOn: LibAddonMenu-2.0>=34
+## DependsOn: LibAddonMenu-2.0>=38
 ## OptionalDependsOn: LibExoYsUtilities
 
 render/inverseCameraMatrixLegacy.lua
