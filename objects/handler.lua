@@ -27,6 +27,9 @@ local libraryPositionObjectDefaults = {
 }
 
 
+
+
+
 --[[ Icon Templates ]] 
 
 local libraryIconTemplateDefault = {
@@ -50,6 +53,13 @@ function Handler:GetIconTemplate( name )
     return self.iconTemplates[name] or libraryIconTemplateDefault
 end
 
+
+function Handler:SetPositionObjectDefaults( defaults )
+    defaults = defaults or {}
+    for key, value in pairs(defaults) do 
+       self.positionObjectDefaults[key] = value 
+    end
+end
 
 
 

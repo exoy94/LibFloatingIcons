@@ -217,7 +217,7 @@ function Object:CreateControl(name, ctrlType, offsetX, offsetY)
     local controls = self.controls 
     local ctrl = WM:CreateControl( self.ctrlName.."_"..tostring(name), controls.rootCtrl, ctrlType )
     ctrl:ClearAnchors() 
-    ctrl:SetAnchor( CENTER, controls.rootCtrl, CENTER, offsetX, offsetY) 
+    ctrl:SetAnchor( CENTER, controls.rootCtrl, CENTER, offsetX or 0 , offsetY or 0) 
     controls[name] = ctrl 
     return ctrl 
 end
@@ -227,6 +227,7 @@ function Object:GetControl(name)
 end
 
 function Object:SetCtrlOffset( name, offsetX, offsetY )
+    if name == "rootCtrl" then return end 
     local ctrl = self.controls[name] 
     if ctrl then
         ctrl:SetAnchor( CENTER, controls.rootCtrl, CENTER, offsetX, offsetY )
