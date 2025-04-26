@@ -58,7 +58,7 @@ function PositionObject:RegisterObject( obj )
     if zone == LFI.zone then  
         if obj.data.enabled then self:AddToRenderList( obj ) end -- add obj to render list if it is in current zone and enabled 
     else
-        obj.rootCtrl:SetHidden(true) -- ensure obj is hidden when in different zone
+        obj.controls.rootCtrl:SetHidden(true) -- ensure obj is hidden when in different zone
     end
 end
 
@@ -184,7 +184,7 @@ function Object:Initialize( Handler, objName, zone, objOpt, iconOpt )
     setmetatable( iconOpt, {__index = iconTemplate} )
     
     local icon = self.controls.icon
-    icon:SetAnchor( CENTER, self.rootCtrl, CENTER, offsetX, offsetY )
+    icon:SetAnchor( CENTER, self.controls.rootCtrl, CENTER, offsetX, offsetY )
     icon:SetTexture( iconOpt.texture )
     icon:SetDimensions( iconOpt.width, iconOpt.height )
     icon:SetColor( unpack(iconOpt.color) )    

@@ -30,7 +30,7 @@
 -- e.g.: 
 
 local name = "lfi_example"
-local lfiHandler = LibFloatingIcons:RegisterHandler( name )  
+local lfiHandler = LibFloatingIcons:RegisterHandler( "lfi_example" )  
 
 -- @param name has to be unique and should indicate by which library/addon the handler was created 
 
@@ -68,7 +68,9 @@ local iconSettings = {texture = "/esoui/art/icons/achievement_u30_groupboss6.dds
 --- see: /objects/position.lua 
 -- for all properties that can be put into the object and icon settings 
 
-lfiHandler:AddPositionObject( "simpleIcon", 1495, opjectSettings, iconSettings)
+lfiHandler:AddPositionObject( objectName, zoneId, opjectSettings, iconSettings)
+
+lfiHandler:AddPositionObject( "simpleIcon", 1495, {x = 56079, y=30974, z=71492, offset = 100, enabled = true}, {texture = "/esoui/art/icons/achievement_u30_groupboss6.dds", width = 50, height = 50})
 
 
 --[[ defaults and templates ]]
