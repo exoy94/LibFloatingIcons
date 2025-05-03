@@ -2,10 +2,7 @@ LibFloatingIcons = LibFloatingIcons or {}
 
 LibFloatingIcons.internal = LibFloatingIcons.internal or {}
 
-
-
 local LFI = LibFloatingIcons.internal
-
 
 function LFI.OnUpdate()  
 
@@ -42,7 +39,7 @@ function LFI.OnUpdate()
     local zTotal = 0
 
     --- calculation of position for each icon 
-    local function UpdateIcon(ctrl, wX, wY, wZ, offset, renderOpt) 
+    local function RenderCtrl(ctrl, wX, wY, wZ, offset, renderOpt) 
         wY = wY + offset
 
         -- calculate unit view position
@@ -79,10 +76,16 @@ function LFI.OnUpdate()
     --- render position icons 
     for _,obj in pairs( LFI.positionObjectHandler.renderList ) do   
         local data = obj.data 
-        UpdateIcon(obj.controls.rootCtrl, data.x, data.y, data.z, data.offset, obj.renderOpt)
+        RenderCtrl(obj.controls.rootCtrl, data.x, data.y, data.z, data.offset, obj.renderOpt)
     end
     
-
+    --- render unit icons 
+    for unit, ctrl in pairs(LFI.unitObjects.renderList) do
+        local x,y,z = GetUnitRawWorldPosition(unit) 
+        local offset = 100 
+        local renderOpt = {scaling = true, fadeout = true, fadedist = 1, baseAlpha = 1}
+        RenderCtrl( ctrl, x, y, z, offset, renderOpt)
+    end
 
     -- sort draw order
     if zTotal > 1 then

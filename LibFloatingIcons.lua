@@ -85,9 +85,6 @@ end
 --[[ ------------ ]]
 
 local function OnPlayerActivated() 
-
-    
-
     local newZone = GetZoneId(GetUnitZoneIndex("player")) 
     if newZone ~= LFI.zone then 
         --if LFI.debug then 
@@ -113,6 +110,7 @@ local function OnInitialPlayerActivated()
     LFI.OnUpdate() -- prevents objs to shortly pop-up on cneter screen after reload
     EM:RegisterForUpdate( LFI.name, 10, LFI.OnUpdate )
     EM:RegisterForEvent( LFI.name, EVENT_PLAYER_ACTIVATED, OnPlayerActivated)
+
 end
 
 
@@ -155,6 +153,8 @@ local function Initialize()
     HUD_UI_SCENE:AddFragment( LFI.sceneFrag )
     HUD_SCENE:AddFragment( LFI.sceneFrag )
     LOOT_SCENE:AddFragment( LFI.sceneFrag )
+
+    LFI.unitObjects:CreateMasterControls() 
 
     EM:RegisterForEvent(LFI.name, EVENT_PLAYER_ACTIVATED, OnInitialPlayerActivated) 
 
