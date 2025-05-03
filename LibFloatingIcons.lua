@@ -95,7 +95,7 @@ local function OnPlayerActivated()
         --    Util.ColorString(GetZoneNameById(LFI.zone), "orange"), LFI.zone, 
         --    Util.ColorString(GetZoneNameById(newZone), "orange"), newZone )  )
         --end  
-        LFI.positionObjects:OnZoneChange( LFI.zone, newZone ) 
+        LFI.positionObjectHandler:OnZoneChange( LFI.zone, newZone ) 
         LFI.zone = newZone
     end 
 end
@@ -107,7 +107,7 @@ local function OnInitialPlayerActivated()
     
     LFI.zone = GetZoneId(GetUnitZoneIndex("player"))
  
-    LFI.positionObjects:AddZoneToRenderList( LFI.zone )   
+    LFI.positionObjectHandler:AddZoneToRenderList( LFI.zone )   
     LFI.playerActivated = true 
     
     LFI.OnUpdate() -- prevents objs to shortly pop-up on cneter screen after reload

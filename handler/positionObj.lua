@@ -1,16 +1,13 @@
 LibFloatingIcons = LibFloatingIcons or {}
 
 LibFloatingIcons.internal = LibFloatingIcons.internal or {}
-
 local LFI = LibFloatingIcons.internal
-
-
 
 local WM = GetWindowManager()
 
---[[ ------------------------- ]]
---[[ -- Incremental Counter -- ]]
---[[ ------------------------- ]]
+--[[ --------------------------------- ]]
+--[[ -- local - incremental counter -- ]]
+--[[ --------------------------------- ]]
 
 local snCounter = 0 
 local function GetSerialNumber() 
@@ -31,12 +28,12 @@ end
 --[[ -- Internal - Position Icon -- ]]
 --[[ ------------------------------ ]]
 
-LibFloatingIcons.internal.positionObjects = {}
-local PositionObject = LibFloatingIcons.internal.positionObjects
+LibFloatingIcons.internal.positionObjectHandler = {}
+local PositionObjectHandler = LibFloatingIcons.internal.positionObjectHandler
 
 
 
-function PositionObject:OnZoneChange( oldZone, newZone )
+function PositionObjectHandler:OnZoneChange( oldZone, newZone )
     self:ClearRenderList() 
     self:AddZoneToRenderList( newZone ) 
 end
@@ -45,9 +42,9 @@ end
 
 --[[ Registry ]]
 
-PositionObject.registry = {}
+PositionObjectHandler.registry = {}
 
-function PositionObject:RegisterObject( obj )
+function PositionObjectHandler:RegisterObject( obj )
     local zone = obj.zone  
     if not self.registry[zone] then self.registry[zone] = {} end    -- initialize zone-specific subregistry table
     self.registry[zone][obj.sn] = obj -- add object to subregistry
@@ -63,7 +60,7 @@ function PositionObject:RegisterObject( obj )
 end
 
 
-function PositionObject:UnregisterObject( obj )
+function PositionObjectHandler:UnregisterObject( obj )
     table.insert(ObjectPool, self)  -- add icon to objectPool
     self.registry[obj.zone][obj.sn] = nil  -- remove icon from registry
 end
@@ -72,9 +69,9 @@ end
 
 --[[ Render List ]]
 
-PositionObject.renderList = {}
+PositionObjectHandler.renderList = {}
 
-function PositionObject:AddZoneToRenderList( zone ) 
+function PositionObjectHandler:AddZoneToRenderList( zone ) 
 
     local SubRegistry = self.registry[zone] 
     if not SubRegistry then SubRegistry = {} end 
@@ -93,7 +90,7 @@ function PositionObject:AddZoneToRenderList( zone )
 end
 
 
-function PositionObject:ClearRenderList() 
+function PositionObjectHandler:ClearRenderList() 
     for _, obj in pairs( self.renderList ) do 
         self:RemoveFromRenderList( obj ) 
     end
@@ -104,13 +101,13 @@ function PositionObject:ClearRenderList()
 end
 
 
-function PositionObject:AddToRenderList( obj ) 
+function PositionObjectHandler:AddToRenderList( obj ) 
     self.renderList[obj.sn] = obj
     obj.controls.rootCtrl:SetHidden(false) 
 end
 
 
-function PositionObject:RemoveFromRenderList( obj )
+function PositionObjectHandler:RemoveFromRenderList( obj )
     obj.controls.rootCtrl:SetHidden(true)  -- to ensure it is not rendered anymore 
     self.renderList[obj.sn] = nil 
 end
@@ -199,14 +196,14 @@ end
 function Object:Enable() 
     self.data.enabled = true 
     if LFI.zone == self.zone then 
-        PositionObject:AddToRenderList( self ) 
+        PositionObjectHandler:AddToRenderList( self ) 
     end
 end
 
 
 function Object:Disable() 
     self.data.enabled = false 
-    PositionObject:RemoveFromRenderList( self ) 
+    PositionObjectHandler:RemoveFromRenderList( self ) 
 end
 
 
@@ -289,7 +286,7 @@ function Handler:AddPositionObject( name, zone, objOpt, iconOpt )
 
     local obj = AssignObject( self, name, zone, objOpt, iconOpt ) -- get obj from pool and initialize it 
     ExoyTest = obj
-    PositionObject:RegisterObject( obj ) -- add to registry and render list (if applicable) 
+    PositionObjectHandler:RegisterObject( obj ) -- add to registry and render list (if applicable) 
     self.positionObjectVault[name] = obj
     return obj 
 end
@@ -305,7 +302,7 @@ function Handler:RemovePositionObject( obj )
     obj.objName = nil 
     obj.handlerName = nil 
 
-    PositionObject:UnregisterObject( obj) 
+    PositionObjectHandler:UnregisterObject( obj) 
 end
 
 

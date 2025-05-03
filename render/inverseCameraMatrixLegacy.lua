@@ -77,7 +77,7 @@ function LFI.OnUpdate()
     end
 
     --- render position icons 
-    for _,obj in pairs( LFI.positionObjects.renderList ) do   
+    for _,obj in pairs( LFI.positionObjectHandler.renderList ) do   
         local data = obj.data 
         UpdateIcon(obj.controls.rootCtrl, data.x, data.y, data.z, data.offset, obj.renderOpt)
     end
