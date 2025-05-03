@@ -125,7 +125,7 @@ local function Initialize()
     local storeDefault = {debug = false}
 
     --LFI.store = ZO_SavedVars:NewAccountWide("LibFloatingIconsSavedVariables", 0, nil, storeDefault)
-    LFI.handlerVault = {}
+    LFI.interfaceHandlerVault = {}
     --LFI.debug = LFI.store.debug 
     LFI.debug = true
     LFI.playerActivated = false 

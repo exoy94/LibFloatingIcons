@@ -238,8 +238,8 @@ end
 --[[ -- LFI Object Handler -- ]]
 --[[ ------------------------ ]]
 
-LFI.handler = LFI.handler or {}
-local Handler = LFI.handler 
+LFI.interfaceHandler = LFI.interfaceHandler or {}
+local Handler = LFI.interfaceHandler 
 
 
 local function AssignObject(...) 

@@ -5,8 +5,8 @@ LibFloatingIcons.internal = LibFloatingIcons.internal or {}
 local LFI = LibFloatingIcons.internal
 
 
-LFI.handler = LFI.handler or {}
-local Handler = LFI.handler 
+LFI.interfaceHandler = LFI.interfaceHandler or {}
+local Handler = LFI.interfaceHandler 
 
 
 function Handler:GetPositionObjects() 
@@ -61,12 +61,12 @@ end
 
 function LibFloatingIcons:RegisterHandler( handlerName ) 
 
-    if LFI.handlerVault[handlerName] then 
+    if LFI.interfaceHandlerVault[handlerName] then 
         LFI.debugMsg({"Error", "red"}, zo_strformat("Duplicate Handler Registration: <<1>>", LFI.util.ColorString(handlerName, "orange") ) )
         return 
     end
 
-    local Meta = self.internal.handler
+    local Meta = self.internal.interfaceHandler
     local NewHandler = {}
     setmetatable( NewHandler, {__index = Meta} )
 
@@ -80,7 +80,7 @@ function LibFloatingIcons:RegisterHandler( handlerName )
     NewHandler.iconTemplates = {}
 
 
-    LFI.handlerVault[handlerName] = NewHandler 
+    LFI.interfaceHandlerVault[handlerName] = NewHandler 
     return NewHandler
 end
 
