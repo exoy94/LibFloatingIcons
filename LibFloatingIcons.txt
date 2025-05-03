@@ -14,9 +14,12 @@ render/inverseCameraMatrixLegacy.lua
 
 modules/slashCommands.lua
 modules/menu.lua
+modules/objectPool.lua
 
-handler/interface.lua
-handler/positionObj.lua
+handler/interfaceHandler.lua
+handler/positionObjectHandler.lua 
+
+objects/positionObject.lua
 
 LibFloatingIcons.lua
 

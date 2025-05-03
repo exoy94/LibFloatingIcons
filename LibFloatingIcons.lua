@@ -122,6 +122,8 @@ end
 
 local function Initialize() 
 
+    LFI.objectPool:Initialize() 
+
     local storeDefault = {debug = false}
 
     --LFI.store = ZO_SavedVars:NewAccountWide("LibFloatingIconsSavedVariables", 0, nil, storeDefault)
