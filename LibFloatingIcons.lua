@@ -154,7 +154,7 @@ local function Initialize()
     HUD_SCENE:AddFragment( LFI.sceneFrag )
     LOOT_SCENE:AddFragment( LFI.sceneFrag )
 
-    LFI.unitObjects:CreateMasterControls() 
+    LFI.unitObjectHandler:CreateMasterControls() 
 
     EM:RegisterForEvent(LFI.name, EVENT_PLAYER_ACTIVATED, OnInitialPlayerActivated) 
 

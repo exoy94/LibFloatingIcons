@@ -3,38 +3,12 @@ LibFloatingIcons = LibFloatingIcons or {}
 LibFloatingIcons.internal = LibFloatingIcons.internal or {}
 local LFI = LibFloatingIcons.internal
 
-local WM = GetWindowManager()
-
-
 LibFloatingIcons.internal.positionObject = {}
 local PositionObject = LibFloatingIcons.internal.positionObject
 
+local WM = GetWindowManager()
 
 
---[[ --------------------------------- ]]
---[[ -- local - incremental counter -- ]]
---[[ --------------------------------- ]]
-
-local snCounter = 0 
-local function GetSerialNumber() 
-    snCounter = snCounter + 1 
-    return snCounter
-end
-
---- objectId 
--- unique number for each object 
--- can be used for mapping 
-local objCounter = 0 
-local function GetObjectId() 
-    objCounter = objCounter + 1
-    return objCounter
-end
-
---[[ ----------------------- ]]
---[[ -- Object Definition -- ]]
---[[ ----------------------- ]]
-
-local ObjPool = {} 
 
 function PositionObject:New(...) 
     local obj = {} 

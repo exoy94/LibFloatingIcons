@@ -80,7 +80,7 @@ function LFI.OnUpdate()
     end
     
     --- render unit icons 
-    for unit, ctrl in pairs(LFI.unitObjects.renderList) do
+    for unit, ctrl in pairs(LFI.unitObjectHandler.renderList) do
         local x,y,z = GetUnitRawWorldPosition(unit) 
         local offset = 100 
         local renderOpt = {scaling = true, fadeout = true, fadedist = 1, baseAlpha = 1}
