@@ -18,8 +18,10 @@ modules/objectPool.lua
 
 handler/interfaceHandler.lua
 handler/positionObjectHandler.lua 
+handler/unitObjectHandler.lua
 
 objects/positionObject.lua
+objects/unitObject.lua
 
 LibFloatingIcons.lua
 
