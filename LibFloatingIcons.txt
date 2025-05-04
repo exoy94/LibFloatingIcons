@@ -20,9 +20,9 @@ modules/objectPool.lua
 ;handler/positionObjectHandler.lua 
 ;handler/unitObjectHandler.lua
 
-objects/classObject.lua
+objects/objClass.lua
 objects/positionObject.lua
-objects/unitObject.lua
+objects/unitObj.lua
 
 
 LibFloatingIcons.lua

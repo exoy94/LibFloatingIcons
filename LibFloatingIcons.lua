@@ -115,23 +115,23 @@ end
 
 local function Initialize() 
 
+    LFI.objectPool:Initialize()
+
     local Init = LibFloatingIcons.init 
 
     LFI.unitObj = Init.objClass:New( Init.unitObj ) 
 
-    LFItest1 = 
+    LibFloatingIcons.init = nil
 
-    LFI.objects.unitObj = LFI.objects.class:New( LFI.init.unitObject )   
+
+
+
+    LFI.initialized = true 
+
+
     
-    LFItest1 = LFI.objects.unitObj
-
-    LFItest2 = LFI.objects.class:New( LFI.init.testObject )
-
-    LFItest3 = LFI.objects.unitObj:New() 
-    LFItest4 = LFI.objects.unitObj:New{ type = "bla" }
-
-    LFI.init = nil
-
+    
+    
     --EM:RegisterForEvent(LFI.name, EVENT_PLAYER_ACTIVATED, OnInitialPlayerActivated) 
 
 end

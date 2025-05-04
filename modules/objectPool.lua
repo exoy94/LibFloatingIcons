@@ -10,9 +10,9 @@ local ObjectPool = LFI.objectPool
 
 
 function ObjectPool:Initialize() 
-    local objects = {"position", "unit"}
-    for _, objType in ipairs(objects) do 
-        self[objType] = { objCounter = 0, snCounter = 0, objects = {}  }
+    local objectTypes = {"position", "unit"}
+    for _, objType in ipairs(objectTypes) do 
+        self[objType] = { objCounter = 0, objects = {}  }
     end
 end
 
