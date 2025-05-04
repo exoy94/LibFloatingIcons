@@ -22,50 +22,85 @@ function ObjectClass:New( obj )
     if not LFI.initialized then return obj end
 
     obj.id = LFI.objectPool:GetNextObjectId( obj.type )
-    obj.controls = obj:CreateBasicControls() 
 
-    
-
-    return obj 
-end
-
-
-
-function ObjectClass:Initialize() 
-
-end
-
-
-
-function ObjectClass:CreateBasicControls()
+    --- create basic controls 
     local ctrlName = zo_strformat("LFI_<<1>>Obj<<2>>", self.type, self.id)
     local rootCtrl = WM:CreateControl( ctrlName.."_rootCtrl" )
     rootCtrl:ClearAnchors()
     rootCtrl:SetAnchor( BOTTOM, LFI.window, CENTER, 0, 0)
     rootCtrl:SetHidden(true)
+    obj.rootCtrl = rootCtrl
 
-    local icon = WM:CreateControl( ctrlName.."_icon", rootCtrl, CT_TEXTURE)
-    icon:ClearAnchors()
-    icon:SetAnchor( CENTER, rootCtrl, CENTER, 0, 0)
-    icon:SetHidden(false)
-
-    return { rootCtrl = rootCtrl, icon = icon }
+    local iconCtrl = WM:CreateControl( ctrlName.."_icon", rootCtrl, CT_TEXTURE)
+    iconCtrl:ClearAnchors()
+    iconCtrl:SetAnchor( CENTER, rootCtrl, CENTER, 0, 0)
+    iconCtrl:SetHidden(false)
+    obj.iconCtrl = iconCtrl
+    
+    obj.customControls = {}
+    
+    return obj 
 end
 
 
-function ObjectClass:AddControl() 
-    --- take control from controlPool
+
+function ObjectClass:Initialize( Interface, name, objData, iconOpt ) 
+
+    self.name = name 
+
+    
+    --- apply default settings 
+
+
+    --- apply icon settings to control 
+    iconOpt = iconOpt or {}
+    local iconTemplate = Interface:GetIconTemplate( iconOpt.template ) 
+    setmetatable( iconOpt, {__index = iconTemplate} )
+
+    local icon = self.iconCtrl
+    icon:SetAnchor( CENTER, self.rootCtrl, CENTER, iconOpt.offsetX, iconOpt.offsetY )
+    icon:SetTexture( iconOpt.texture )
+    icon:SetDimensions( iconOpt.width, iconOpt.height )
+    icon:SetColor( unpack(iconOpt.color) )  
+    icon:SetHidden( iconOpt.hidden ) 
+
 end
 
 
-function ObjectClass:GetControls() 
-    return self.controls
+
+
+--[[ Basic Controls ]]
+
+function ObjectClass:GetRootControl() 
+    return self.rootCtrl
+end 
+
+
+function ObjectClass:GetIconControl() 
+    return self.iconCtrl
 end
 
 
-function ObjectClass:GetControl( name ) 
-    return self.controls[name]
+--[[ Custom Controls ]]
+
+function ObjectClass:GetCustomControls() 
+    return self.customControls 
 end
+
+
+function ObjectClass:GetCustomControl( name ) 
+    return self.customControls[name]
+end
+
+--- AddCustomControl() 
+
+--- MoveCustomControl 
+
+
+
+
+
+
 
 
 

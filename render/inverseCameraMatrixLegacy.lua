@@ -6,8 +6,6 @@ local LFI = LibFloatingIcons.internal
 
 function LFI.OnUpdate()  
 
-    if true then return end
-
     --- using LFI variables 
     local RenderSpace = LFI.renderSpace
     local Window = LFI.window
@@ -76,13 +74,13 @@ function LFI.OnUpdate()
     end
 
     --- render position icons 
-    for _,obj in pairs( LFI.positionObjectHandler.renderList ) do   
+    for _,obj in pairs( LFI.positionHandler.render ) do   
         local data = obj.data 
         RenderCtrl(obj.controls.rootCtrl, data.x, data.y, data.z, data.offset, obj.renderOpt)
     end
     
     --- render unit icons 
-    for unit, ctrl in pairs(LFI.unitObjectHandler.renderList) do
+    for unit, ctrl in pairs(LFI.unitHandler.render) do
         local x,y,z = GetUnitRawWorldPosition(unit) 
         local offset = 100 
         local renderOpt = {scaling = true, fadeout = true, fadedist = 1, baseAlpha = 1}

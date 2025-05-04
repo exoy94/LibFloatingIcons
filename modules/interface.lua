@@ -1,27 +1,12 @@
 LibFloatingIcons = LibFloatingIcons or {}
 
 LibFloatingIcons.internal = LibFloatingIcons.internal or {}
-
 local LFI = LibFloatingIcons.internal
 
 
-LFI.interfaceHandler = LFI.interfaceHandler or {}
-local Handler = LFI.interfaceHandler 
+LFI.interface = {}
+local Interface = LFT.interface 
 
-
-function Handler:GetPositionObjects() 
-    return self.positionObjectVault
-end
-
-
-local libraryPositionObjectDefaults = {
-    x = 0, 
-    y = 0, 
-    z = 0, 
-    enabled = false, 
-    hidden = true, 
-    offset = 0, 
-}
 
 
 --[[ Icon Templates ]] 
@@ -36,54 +21,64 @@ local libraryIconTemplateDefault = {
     offsetY = 0,
 }
 
-function Handler:DefineIconTemplate( name, opt )
+function Interface:DefineIconTemplate( name, opt )
     opt = opt or {}
     self.iconTemplates[name] = opt 
     setmetatable(self.iconTemplates[name], {__index = libraryIconTemplateDefault } ) 
 end
 
-function Handler:GetIconTemplate( name ) 
+
+function Interface:GetIconTemplate( name ) 
     return self.iconTemplates[name] or libraryIconTemplateDefault
 end
+ 
 
 
-function Handler:SetPositionObjectDefaults( defaults )
-    defaults = defaults or {}
-    for key, value in pairs(defaults) do 
-       self.positionObjectDefaults[key] = value 
-    end
+--[[ Exposed Functions ]]
+
+
+function Interface:AddPositionObject( name, objData, iconSettings ) 
+
+    local objType = "position"
+
+    local obj = LFI.objectPool:RetrieveObject( objType )
+    obj:Initialize( self, name, objData, iconSettings ) --- apply icon template, apply defaults settings
+    
+
 end
 
 
 
 
---[[ Registration Function  ]]
+
 
 function LibFloatingIcons:RegisterHandler( handlerName ) 
 
-    if LFI.interfaceHandlerVault[handlerName] then 
+    --- early outs 
+    if not LFI.initialized then -- library not properly initialized 
+        LFI.debugMsg({"Error", "red"}, zo_strformat("Handler Registration: <<1>> attempted before LFI initialize", LFI.util.ColorString(handlerName, "orange") ) )
+        return 
+    end 
+
+    if LFI.interfaceVault[handlerName] then -- duplicate handlerName
         LFI.debugMsg({"Error", "red"}, zo_strformat("Duplicate Handler Registration: <<1>>", LFI.util.ColorString(handlerName, "orange") ) )
         return 
     end
 
-    local Meta = self.internal.interfaceHandler
-    local NewHandler = {}
-    setmetatable( NewHandler, {__index = Meta} )
+    local Handler = {}
+    setmetatable( Handler, {__index = Interface } )
+    Handler.name = handerName 
 
-    NewHandler.name = handlerName
+    Handler.iconTemplates = {}
 
-    --- PositionIcon - Specific 
-    NewHandler.positionObjectDefaults = {}
-    setmetatable(NewHandler.positionObjectDefaults, {__index = libraryPositionObjectDefaults} )
-
-    NewHandler.positionObjectVault = {}
-    NewHandler.iconTemplates = {}
-
-
-    LFI.interfaceHandlerVault[handlerName] = NewHandler 
-    return NewHandler
-end
+end 
 
 
 
 
+
+
+
+
+--- RegisterForZoneActivation() 
+--- UnregisterForZoneActivation() 

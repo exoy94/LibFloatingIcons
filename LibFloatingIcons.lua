@@ -73,11 +73,8 @@ function LFI.debugMsg(title, msg)
         header = header.." - "..titleStr
     end
 
-    if LibExoYsUtilities then 
-        LibExoYsUtilities.Debug(msg, {header, titleColor} ) 
-    else 
-        d( zo_strformat("[<<1>> <<2>>] <<3>>", Util.ColorString(GetTimeString(), "gray"), Util.ColorString(header, titleColor), msg) )  
-    end
+    d( zo_strformat("[<<1>> <<2>>] <<3>>", Util.ColorString(GetTimeString(), "gray"), Util.ColorString(header, titleColor), msg) )  
+
 end
 
 
@@ -88,8 +85,9 @@ end
 local function OnPlayerActivated() 
     local newZone = GetZoneId(GetUnitZoneIndex("player")) 
     if newZone ~= LFI.zone then 
-        --- release all PositionObjects
-        --- custom event to ensure new position objects are registered after registry was cleaned for previous zone 
+        LFI.positionHandler:ClearRegistry() 
+        CM:FireCallbacks("LFI_ZoneChange", newZone)
+    LFI.zone = newZone 
     end 
 end
 
@@ -98,13 +96,13 @@ local function OnInitialPlayerActivated()
 
     EM:UnregisterForEvent( LFI.name, EVENT_PLAYER_ACTIVATED)
     
-   -- LFI.zone = GetZoneId(GetUnitZoneIndex("player"))
- 
+    LFI.zone = GetZoneId(GetUnitZoneIndex("player"))
+    CM:FireCallbacks("LFI_ZoneChange", LFI.zone)
     --LFI.positionObjectHandler:AddZoneToRenderList( LFI.zone )   
     --LFI.playerActivated = true 
     
-    --LFI.OnUpdate() -- prevents objs to shortly pop-up on cneter screen after reload
-    --EM:RegisterForUpdate( LFI.name, 10, LFI.OnUpdate )
+    LFI.OnUpdate() -- prevents objs to shortly pop-up on cneter screen after reload
+    EM:RegisterForUpdate( LFI.name, 10, LFI.OnUpdate )
     EM:RegisterForEvent( LFI.name, EVENT_PLAYER_ACTIVATED, OnPlayerActivated)
 
 end
@@ -114,25 +112,58 @@ end
 --[[ -- Initialize -- ]] 
 --[[ ---------------- ]]
 
-
 local function Initialize() 
 
+    --- saved variables 
+
+    --- menu 
+
+
+    --- variables 
+    LFI.interfaceVault = {}
+
+    --- initialize objects and handler
     LFI.objectPool:Initialize()
 
     local Init = LibFloatingIcons.init 
-
     LFI.unitObject = Init.objectClass:New( Init.unitObject ) 
     LFI.positionObject = Init.objectClass:New( Init.positionObject ) 
 
     LFI.unitHandler = Init.handlerClass:New( Init.unitHandler ) 
     LFI.positionHandler = Init.handlerClass:New( Init.positionHandler )
 
+    LibFloatingIcons.init = nil 
 
 
-    LibFloatingIcons.init = nil
+    --- initialize render environment 
+    local RenderSpace = WM:CreateControl("LFI_RenderSpace", GuiRoot, CT_CONTROl)
+    RenderSpace:SetAnchorFill( GuiRoot )
+    RenderSpace:Create3DRenderSpace() 
+    RenderSpace:SetHidden( true ) 
+    LFI.renderSpace = RenderSpace
+
+    -- create parent window for controls
+    local Window = WM:CreateTopLevelWindow( 'LFI_Window' )
+    Window:SetClampedToScreen( true )
+    Window:SetMouseEnabled( false )
+    Window:SetMovable( false )
+    Window:SetAnchorFill( GuiRoot )
+    Window:SetDrawLayer( DL_BACKGROUND )
+    Window:SetDrawTier( DT_LOW )
+    Window:SetDrawLevel( 0 )
+    LFI.window = Window
+
+    -- create parent window scene fragment (only local to prevent crash when iterating over internal)
+    local frag = ZO_HUDFadeSceneFragment:New( Window )
+    HUD_UI_SCENE:AddFragment( frag )
+    HUD_SCENE:AddFragment( frag )
+    LOOT_SCENE:AddFragment( frag )
+
 
     LFI.initialized = true 
     
+    CM:RegisterCallback("LFI_ZoneChange", function(newZone) d("LFI Zone Activation: "..tostring(newZone) ) end )
+
     EM:RegisterForEvent(LFI.name, EVENT_PLAYER_ACTIVATED, OnInitialPlayerActivated) 
 
 end

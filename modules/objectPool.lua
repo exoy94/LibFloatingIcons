@@ -23,28 +23,23 @@ function ObjectPool:GetNextObjectId( objType )
 end
 
 
-function ObjectPool:GetNextSerialNumber( objType )     
-    self[objType].snCounter = self[objType].snCounter + 1
-    return self[objType].snCounter
+function ObjectPool:StoreObject( obj ) 
+    obj.name = nil 
+    table.insert( self[obj.type].objects, obj ) 
 end
 
 
-function ObjectPool:StoreObject( objType, obj ) 
-    table.insert( self[objType].objects, obj ) 
-end
-
-
-function ObjectPool:AssignObject( objType, ... ) 
-    local class = LFI[objType.."Object"] 
-    local pool = self[objType].objects
+function ObjectPool:RetrieveObject( objType ) 
+    local Class = LFI[objType.."Object"] 
+    local Pool = self[objType].objects
     local obj 
 
     if ZO_IsTableEmpty(pool) then 
-        obj = class:New( ... )
+        obj = Class:New( ... )
     else 
         obj = pool[#pool] 
         pool[#pool] = nil
-        obj:Initialize( ... ) 
     end
+
     return obj 
 end

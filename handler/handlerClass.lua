@@ -18,7 +18,6 @@ function HandlerClass:New( obj )
     obj.render = {} 
     obj.registry = {}
 
-
     return obj 
 end
 
@@ -30,6 +29,8 @@ end
 
 
 function HandlerClass:RemoveFromRenderList( key ) 
+    local obj = self.render[id] 
+    --- hide icon 
     self.render[id] = nil 
 end
 
