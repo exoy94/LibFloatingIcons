@@ -5,9 +5,10 @@ local LFI = LibFloatingIcons.internal
 
 local EM = GetEventManager() 
 local WM = GetWindowManager()
+local CM = ZO_CallbackObject:New()
  
 LFI.name = "LibFloatingIcons"
-LFI.version = "0.2"
+LFI.version = "0.3"
 
 --[[ ------------- ]]
 --[[ -- Utility -- ]]
@@ -87,13 +88,7 @@ end
 local function OnPlayerActivated() 
     local newZone = GetZoneId(GetUnitZoneIndex("player")) 
     if newZone ~= LFI.zone then 
-        --if LFI.debug then 
-        --    LFI.debugMsg("ZoneChange", zo_strformat("<<1>> (<<2>>) -> <<3>> (<<4>>)", 
-        --    Util.ColorString(GetZoneNameById(LFI.zone), "orange"), LFI.zone, 
-        --    Util.ColorString(GetZoneNameById(newZone), "orange"), newZone )  )
-        --end  
-        LFI.positionObjectHandler:OnZoneChange( LFI.zone, newZone ) 
-        LFI.zone = newZone
+        --- release all PositionObjects
     end 
 end
 
@@ -120,46 +115,25 @@ end
 
 local function Initialize() 
 
-    LFI.objectPool:Initialize() 
+    local Init = LibFloatingIcons.init 
 
-    local storeDefault = {debug = false}
+    LFI.unitObj = Init.objClass:New( Init.unitObj ) 
 
-    --LFI.store = ZO_SavedVars:NewAccountWide("LibFloatingIconsSavedVariables", 0, nil, storeDefault)
-    LFI.interfaceHandlerVault = {}
-    --LFI.debug = LFI.store.debug 
-    LFI.debug = true
-    LFI.playerActivated = false 
+    LFItest1 = 
 
-    local RenderSpace = WM:CreateControl("LFI_RenderSpace", GuiRoot, CT_CONTROl)
-    RenderSpace:SetAnchorFill( GuiRoot )
-    RenderSpace:Create3DRenderSpace() 
-    RenderSpace:SetHidden( true ) 
-    LFI.renderSpace = RenderSpace
+    LFI.objects.unitObj = LFI.objects.class:New( LFI.init.unitObject )   
+    
+    LFItest1 = LFI.objects.unitObj
 
-    -- create parent window for controls
-    local Window = WM:CreateTopLevelWindow( 'LFI_Window' )
-    Window:SetClampedToScreen( true )
-    Window:SetMouseEnabled( false )
-    Window:SetMovable( false )
-    Window:SetAnchorFill( GuiRoot )
-    Window:SetDrawLayer( DL_BACKGROUND )
-    Window:SetDrawTier( DT_LOW )
-    Window:SetDrawLevel( 0 )
-    LFI.window = Window
+    LFItest2 = LFI.objects.class:New( LFI.init.testObject )
 
-    -- create parent window scene fragment
-    local frag = ZO_HUDFadeSceneFragment:New( Window )
-    LFI.sceneFrag = frag
-    HUD_UI_SCENE:AddFragment( LFI.sceneFrag )
-    HUD_SCENE:AddFragment( LFI.sceneFrag )
-    LOOT_SCENE:AddFragment( LFI.sceneFrag )
+    LFItest3 = LFI.objects.unitObj:New() 
+    LFItest4 = LFI.objects.unitObj:New{ type = "bla" }
 
-    LFI.unitObjectHandler:CreateMasterControls() 
+    LFI.init = nil
 
-    EM:RegisterForEvent(LFI.name, EVENT_PLAYER_ACTIVATED, OnInitialPlayerActivated) 
+    --EM:RegisterForEvent(LFI.name, EVENT_PLAYER_ACTIVATED, OnInitialPlayerActivated) 
 
-    --LFI:CreateMenu()
-    LFI.initialized = true
 end
 
 local function OnAddonLoaded(_, addonName) 

@@ -16,9 +16,9 @@ modules/slashCommands.lua
 modules/menu.lua
 modules/objectPool.lua
 
-handler/interfaceHandler.lua
-handler/positionObjectHandler.lua 
-handler/unitObjectHandler.lua
+;handler/interfaceHandler.lua
+;handler/positionObjectHandler.lua 
+;handler/unitObjectHandler.lua
 
 objects/classObject.lua
 objects/positionObject.lua

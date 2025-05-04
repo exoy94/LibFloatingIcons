@@ -4,15 +4,17 @@ LibFloatingIcons.internal = LibFloatingIcons.internal or {}
 local LFI = LibFloatingIcons.internal
 
 
-LFI.unitObject = LFI.objectClass:New( "unit", ... ) 
+LFI.init = LibFloatingIcons.init or {}
 
-local UnitObject = LFI.unitObject or {}
+LFI.init.unitObject = {}
 
-local WM = GetWindowManager()
+local UnitObject = LFI.init.unitObject 
 
-
-LFI.testObject = LFI.objectClass:New( "position", ...) 
+UnitObject.type = "unit"
 
 function UnitObject:Output() 
     d( "Output UnitObject" )
 end
+
+
+LFI.init.testObject = {}

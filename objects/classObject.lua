@@ -3,23 +3,19 @@ LibFloatingIcons = LibFloatingIcons or {}
 LibFloatingIcons.internal = LibFloatingIcons.internal or {}
 local LFI = LibFloatingIcons.internal
 
-LibFloatingIcons.internal.objectClass = {}
-local ObjectClass = LibFloatingIcons.internal.objectClass
+LFI.objects = {} 
+LFI.objects.class = {}
+
+local ObjectClass = LFI.objects.class 
 
 
-function ObjectClass:New( objType, ... ) 
+function ObjectClass:New( obj ) 
 
-    local obj = {}
+    obj = obj or {}
     setmetatable( obj, self ) 
     self.__index = self 
-
-    obj.id = LibFloatingIcons.internal.objectPool:GetNextObjectId( objType ) 
-    obj.type = objType 
 
     return obj 
 end
 
 
-function ObjectClass:Output() 
-    d("Output ObjectClass")
-end
