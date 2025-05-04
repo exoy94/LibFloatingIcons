@@ -4,8 +4,10 @@ LibFloatingIcons.internal = LibFloatingIcons.internal or {}
 local LFI = LibFloatingIcons.internal
 
 LibFloatingIcons.init = LibFloatingIcons.init or {}
-LibFloatingIcons.init.unitObj = {}
+LibFloatingIcons.init.positionHandler = {}
 
-local UnitObject = LibFloatingIcons.init.unitObj
+local PositionHandler = LibFloatingIcons.init.positionHandler
 
-UnitObject.type = "unit"
+
+
+--- function ZoneChange ()  (fct: ClearRenderList/ ClearRegistry ) 

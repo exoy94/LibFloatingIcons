@@ -10,20 +10,20 @@
 ## DependsOn: LibAddonMenu-2.0>=38
 ## OptionalDependsOn: LibExoYsUtilities
 
-render/inverseCameraMatrixLegacy.lua
+handler/handlerClass.lua
+handler/positionHandler.lua 
+handler/unitHandler.lua
 
-modules/slashCommands.lua
+modules/interface.lua
 modules/menu.lua
 modules/objectPool.lua
+modules/slashCommands.lua
 
-;handler/interfaceHandler.lua
-;handler/positionObjectHandler.lua 
-;handler/unitObjectHandler.lua
-
-objects/objClass.lua
+objects/objectClass.lua
 objects/positionObject.lua
-objects/unitObj.lua
+objects/unitObject.lua
 
+render/inverseCameraMatrixLegacy.lua
 
 LibFloatingIcons.lua
 

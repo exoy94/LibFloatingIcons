@@ -4,7 +4,8 @@ LibFloatingIcons.internal = LibFloatingIcons.internal or {}
 local LFI = LibFloatingIcons.internal
 
 LibFloatingIcons.init = LibFloatingIcons.init or {}
-LibFloatingIcons.init.positionObjHandler = {}
+LibFloatingIcons.init.unitObject = {}
 
-local PositionObjHandler = LibFloatingIcons.init.positionObjHandler
+local UnitObject = LibFloatingIcons.init.unitObject
 
+UnitObject.type = "unit"

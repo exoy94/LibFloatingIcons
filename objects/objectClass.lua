@@ -4,9 +4,9 @@ LibFloatingIcons.internal = LibFloatingIcons.internal or {}
 local LFI = LibFloatingIcons.internal
 
 LibFloatingIcons.init = LibFloatingIcons.init or {}
-LibFloatingIcons.init.objClass = {}
+LibFloatingIcons.init.objectClass = {}
 
-local ObjectClass = LibFloatingIcons.init.objClass
+local ObjectClass = LibFloatingIcons.init.objectClass
 
 local WM = GetWindowManager() 
 

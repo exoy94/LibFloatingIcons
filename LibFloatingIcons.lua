@@ -89,6 +89,7 @@ local function OnPlayerActivated()
     local newZone = GetZoneId(GetUnitZoneIndex("player")) 
     if newZone ~= LFI.zone then 
         --- release all PositionObjects
+        --- custom event to ensure new position objects are registered after registry was cleaned for previous zone 
     end 
 end
 
@@ -97,13 +98,13 @@ local function OnInitialPlayerActivated()
 
     EM:UnregisterForEvent( LFI.name, EVENT_PLAYER_ACTIVATED)
     
-    LFI.zone = GetZoneId(GetUnitZoneIndex("player"))
+   -- LFI.zone = GetZoneId(GetUnitZoneIndex("player"))
  
-    LFI.positionObjectHandler:AddZoneToRenderList( LFI.zone )   
-    LFI.playerActivated = true 
+    --LFI.positionObjectHandler:AddZoneToRenderList( LFI.zone )   
+    --LFI.playerActivated = true 
     
-    LFI.OnUpdate() -- prevents objs to shortly pop-up on cneter screen after reload
-    EM:RegisterForUpdate( LFI.name, 10, LFI.OnUpdate )
+    --LFI.OnUpdate() -- prevents objs to shortly pop-up on cneter screen after reload
+    --EM:RegisterForUpdate( LFI.name, 10, LFI.OnUpdate )
     EM:RegisterForEvent( LFI.name, EVENT_PLAYER_ACTIVATED, OnPlayerActivated)
 
 end
@@ -113,26 +114,26 @@ end
 --[[ -- Initialize -- ]] 
 --[[ ---------------- ]]
 
+
 local function Initialize() 
 
     LFI.objectPool:Initialize()
 
     local Init = LibFloatingIcons.init 
 
-    LFI.unitObj = Init.objClass:New( Init.unitObj ) 
+    LFI.unitObject = Init.objectClass:New( Init.unitObject ) 
+    LFI.positionObject = Init.objectClass:New( Init.positionObject ) 
+
+    LFI.unitHandler = Init.handlerClass:New( Init.unitHandler ) 
+    LFI.positionHandler = Init.handlerClass:New( Init.positionHandler )
+
+
 
     LibFloatingIcons.init = nil
 
-
-
-
     LFI.initialized = true 
-
-
     
-    
-    
-    --EM:RegisterForEvent(LFI.name, EVENT_PLAYER_ACTIVATED, OnInitialPlayerActivated) 
+    EM:RegisterForEvent(LFI.name, EVENT_PLAYER_ACTIVATED, OnInitialPlayerActivated) 
 
 end
 
