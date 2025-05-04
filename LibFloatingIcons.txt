@@ -20,8 +20,10 @@ handler/interfaceHandler.lua
 handler/positionObjectHandler.lua 
 handler/unitObjectHandler.lua
 
+objects/classObject.lua
 objects/positionObject.lua
 objects/unitObject.lua
+
 
 LibFloatingIcons.lua
 

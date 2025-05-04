@@ -6,6 +6,8 @@ local LFI = LibFloatingIcons.internal
 
 function LFI.OnUpdate()  
 
+    if true then return end
+
     --- using LFI variables 
     local RenderSpace = LFI.renderSpace
     local Window = LFI.window

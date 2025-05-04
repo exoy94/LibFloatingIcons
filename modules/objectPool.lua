@@ -18,7 +18,7 @@ end
 
 
 function ObjectPool:GetNextObjectId( objType ) 
-    self[objType].objCounter = self[objType].objCounter + 1
+    self[objType].objCounter = self[objType].objCounter + 1  --- error because table is only initialized in addon init function
     return self[objType].objCounter
 end
 
