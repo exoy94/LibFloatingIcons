@@ -3,10 +3,8 @@ LibFloatingIcons = LibFloatingIcons or {}
 LibFloatingIcons.internal = LibFloatingIcons.internal or {}
 local LFI = LibFloatingIcons.internal
 
-
-LFI.interface = {}
-local Interface = LFT.interface 
-
+LFI.interface = LFI.interface or {}
+local Interface = LFI.interface 
 
 
 --[[ Icon Templates ]] 
@@ -34,26 +32,60 @@ end
  
 
 
---[[ Exposed Functions ]]
+local libraryPositionObjectDataDefault = { 
+    x = 0, 
+    y = 0, 
+    z = 0, 
+    enabled = false, 
+    hidden = true, 
+}
 
 
-function Interface:AddPositionObject( name, objData, iconSettings ) 
 
-    local objType = "position"
+local libraryUnitObjectDataDefault = {
+    enabled = false, 
+    hidden = true,    
+}
 
-    local obj = LFI.objectPool:RetrieveObject( objType )
-    obj:Initialize( self, name, objData, iconSettings ) --- apply icon template, apply defaults settings
-    
 
+
+
+--[[ Object Handling ]]
+
+local function AddObject( self, objType, name, objData, iconSettings ) 
+    -- self = respective Interface 
+    --- ToDo variable check 
+    -- unique name 
+    -- correct variable types 
+
+    local Handler = self:GetHandler()
+    -- provides the interfac to use individual default values 
+    local obj = Handler:AddObject( self, name, objData, iconSettings)
+
+    --- ToDo initial enabled/buffer/render decision 
+
+    self.objectVault[objType][name] = obj
+
+    return obj
+end
+
+
+-- seperate syntax for position and unit to reduce amout of input parameters 
+
+function Interface:AddPositionObject( ...  )
+    return AddObject( self, "position", ...)
+end
+
+function Interface:AddUnitObject( ...  )
+    return AddObject( self, "position", ...)
 end
 
 
 
 
-
+--[[ Exposed Handler Definition ]]
 
 function LibFloatingIcons:RegisterHandler( handlerName ) 
-
     --- early outs 
     if not LFI.initialized then -- library not properly initialized 
         LFI.debugMsg({"Error", "red"}, zo_strformat("Handler Registration: <<1>> attempted before LFI initialize", LFI.util.ColorString(handlerName, "orange") ) )
@@ -68,6 +100,13 @@ function LibFloatingIcons:RegisterHandler( handlerName )
     local Handler = {}
     setmetatable( Handler, {__index = Interface } )
     Handler.name = handerName 
+
+    --- object data defaults 
+    Handler.objectDataDefaults = { position = {}, unit = {} }
+    setmetatable( Handler.objectDataDefaults.position, {__index = libraryPositionObjectDataDefault} )
+    setmetatable( Handler.objectDataDefaults.unit, {__index = libraryUnitObjectDataDefault} )
+
+    Handler.objectVault = { position= {}, unit = {} }
 
     Handler.iconTemplates = {}
 

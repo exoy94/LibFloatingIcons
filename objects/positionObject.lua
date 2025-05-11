@@ -3,9 +3,13 @@ LibFloatingIcons = LibFloatingIcons or {}
 LibFloatingIcons.internal = LibFloatingIcons.internal or {}
 local LFI = LibFloatingIcons.internal
 
-LibFloatingIcons.init = LibFloatingIcons.init or {}
-LibFloatingIcons.init.positionObject = {}
+LibFloatingIcons.classes = LibFloatingIcons.classes or {}
+LibFloatingIcons.classes.positionObject = {}
 
-local PositionObj = LibFloatingIcons.init.positionObject
+local PositionObject = LibFloatingIcons.classes.positionObject
 
-PositionObj.type = "position"
+PositionObject.type = "position"
+
+function PositionObject:TestFunc() 
+    d("---hello world" )
+end

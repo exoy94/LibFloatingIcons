@@ -3,11 +3,50 @@ LibFloatingIcons = LibFloatingIcons or {}
 LibFloatingIcons.internal = LibFloatingIcons.internal or {}
 local LFI = LibFloatingIcons.internal
 
-LibFloatingIcons.init = LibFloatingIcons.init or {}
-LibFloatingIcons.init.positionHandler = {}
+LibFloatingIcons.classes = LibFloatingIcons.classes or {}
+LibFloatingIcons.classes.unitHandler = {}
 
-local PositionHandler = LibFloatingIcons.init.positionHandler
+local UnitHandler = LibFloatingIcons.classes.unitHandler
 
+local WM = GetWindowManager()
 
+UnitHandler.type = "unit"
 
 --- function ZoneChange ()  (fct: ClearRenderList/ ClearRegistry ) 
+
+
+function UnitHandler:AddToBuffer() 
+    --- determine if the master control is already in render, if not add it, if it is, add it to a list 
+
+end
+
+
+function UnitHandler:CreateMasterControls() 
+    local name = "LFI_UnitMasterCtrl_"
+
+    local masterCtrls = { }
+
+    local function _CreateControl( unit )
+        local ctrl = WM:CreateControl( name..unit, LFI.window, CT_CONTROL) 
+        ctrl:ClearAnchors() 
+        ctrl:SetAnchor( BOTTOM, LFI.window, CENTER, 0, 0) 
+        ctrl:SetHidden(true)              
+        
+        masterCtrls[unit] = ctrl
+    end
+
+    _CreateControl( "player" )
+    _CreateControl( "companion" )
+
+    for ii = 1,GROUP_SIZE_MAX do 
+        local tag = "group"..tostring(ii) 
+        _CreateControl( tag ) 
+    end 
+
+    for ii = 1,MAX_PET_UNIT_TAGS do 
+        local tag = "playerpet"..tostring(ii) 
+        _CreateControl( tag ) 
+    end
+
+    self.masterCtrls = masterCtrls
+end

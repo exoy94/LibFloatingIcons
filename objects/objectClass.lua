@@ -3,10 +3,10 @@ LibFloatingIcons = LibFloatingIcons or {}
 LibFloatingIcons.internal = LibFloatingIcons.internal or {}
 local LFI = LibFloatingIcons.internal
 
-LibFloatingIcons.init = LibFloatingIcons.init or {}
-LibFloatingIcons.init.objectClass = {}
+LibFloatingIcons.classes = LibFloatingIcons.classes or {}
+LibFloatingIcons.classes.objectClass = {}
 
-local ObjectClass = LibFloatingIcons.init.objectClass
+local ObjectClass = LibFloatingIcons.classes.objectClass
 
 local WM = GetWindowManager() 
 
@@ -48,9 +48,9 @@ function ObjectClass:Initialize( Interface, name, objData, iconOpt )
 
     self.name = name 
 
-    
     --- apply default settings 
-
+    self.data = objData or {}
+    setmetatable( self.data, {__index = Interface.objectDefaults[self.objType] } )
 
     --- apply icon settings to control 
     iconOpt = iconOpt or {}
@@ -99,8 +99,23 @@ end
 
 
 
+--[[ Interaction with Handler ]]
+
+function ObjectClass:GetHandler() 
+    return LFI[self.objType.."Handler"]
+end
 
 
+function ObjectClass:Enable() 
+    self.data.enabled = true 
+    
+    local Handler = self:GetHandler() 
+    Handler:AddToBuffer( obj )
+
+end
 
 
+function ObjectClass:Disable() 
+
+end 
 

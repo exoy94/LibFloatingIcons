@@ -3,10 +3,10 @@ LibFloatingIcons = LibFloatingIcons or {}
 LibFloatingIcons.internal = LibFloatingIcons.internal or {}
 local LFI = LibFloatingIcons.internal
 
-LibFloatingIcons.init = LibFloatingIcons.init or {}
-LibFloatingIcons.init.handlerClass =     {}
+LibFloatingIcons.classes = LibFloatingIcons.classes or {}
+LibFloatingIcons.classes.handlerClass = {}
 
-local HandlerClass = LibFloatingIcons.init.handlerClass
+local HandlerClass = LibFloatingIcons.classes.handlerClass
 
 
 function HandlerClass:New( obj ) 
@@ -15,11 +15,21 @@ function HandlerClass:New( obj )
     setmetatable( obj, self ) 
     self.__index = self 
 
+    obj.registry = {} 
+    obj.buffer = {}
     obj.render = {} 
-    obj.registry = {}
 
     return obj 
 end
+
+
+function HandlerClass:AddObject( Interface, name, objData, iconSettings )
+    
+    local obj = LFI.objectPool:RetrieveObject( self.type )
+    obj:Initialize( Interface, name, objData, iconSettings  ) 
+
+end
+
 
 
 function HandlerClass:AddToRenderList( id, obj ) 

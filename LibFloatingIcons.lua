@@ -125,15 +125,14 @@ local function Initialize()
     --- initialize objects and handler
     LFI.objectPool:Initialize()
 
-    local Init = LibFloatingIcons.init 
-    LFI.unitObject = Init.objectClass:New( Init.unitObject ) 
-    LFI.positionObject = Init.objectClass:New( Init.positionObject ) 
+    local Classes = LibFloatingIcons.classes 
+    LFI.unitObject = Classes.objectClass:New( Classes.unitObject ) 
+    LFI.positionObject = Classes.objectClass:New( Classes.positionObject ) 
 
-    LFI.unitHandler = Init.handlerClass:New( Init.unitHandler ) 
-    LFI.positionHandler = Init.handlerClass:New( Init.positionHandler )
+    LFI.unitHandler = Classes.handlerClass:New( Classes.unitHandler ) 
+    LFI.positionHandler = Classes.handlerClass:New( Classes.positionHandler )
 
-    LibFloatingIcons.init = nil 
-
+    LibFloatingIcons.classes = nil 
 
     --- initialize render environment 
     local RenderSpace = WM:CreateControl("LFI_RenderSpace", GuiRoot, CT_CONTROl)
@@ -158,6 +157,8 @@ local function Initialize()
     HUD_UI_SCENE:AddFragment( frag )
     HUD_SCENE:AddFragment( frag )
     LOOT_SCENE:AddFragment( frag )
+
+    LFI.unitHandler:CreateMasterControls()
 
 
     LFI.initialized = true 

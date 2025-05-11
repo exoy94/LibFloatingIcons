@@ -18,7 +18,7 @@ end
 
 
 function ObjectPool:GetNextObjectId( objType ) 
-    self[objType].objCounter = self[objType].objCounter + 1  --- error because table is only initialized in addon init function
+    self[objType].objCounter = self[objType].objCounter + 1 
     return self[objType].objCounter
 end
 
@@ -34,8 +34,8 @@ function ObjectPool:RetrieveObject( objType )
     local Pool = self[objType].objects
     local obj 
 
-    if ZO_IsTableEmpty(pool) then 
-        obj = Class:New( ... )
+    if ZO_IsTableEmpty(Pool) then 
+        obj = Class:New()
     else 
         obj = pool[#pool] 
         pool[#pool] = nil
@@ -43,3 +43,5 @@ function ObjectPool:RetrieveObject( objType )
 
     return obj 
 end
+
+
