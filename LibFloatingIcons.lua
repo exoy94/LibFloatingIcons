@@ -57,24 +57,11 @@ function Util.ColorString(str, colorName)
 --[[ -- Debug -- ]] 
 --[[ ----------- ]]
 
-function LFI.debugMsg(title, msg) 
-    
-    local titleStr, titleColor
-    if Util.IsTable(title) then 
-        titleStr = title[1] 
-        titleColor = title[2]
-    else 
-        titleStr = title 
-        titleColor = "cyan" 
-    end
-
-    local header = "LFI"
-    if titleStr then 
-        header = header.." - "..titleStr
-    end
-
-    d( zo_strformat("[<<1>> <<2>>] <<3>>", Util.ColorString(GetTimeString(), "gray"), Util.ColorString(header, titleColor), msg) )  
-
+function LFI.debugMsg(titleInfo, msg) 
+    local titleStr = Util.IsTable(titleInfo) and " - "..titleInfo[1] or ""
+    local titleColor = Util.IsTable(titleInfo) and titleInfo[2] or "cyan"
+    local title = Util.ColorString( "LFI"..titleStr, titleColor)
+    d( zo_strformat("<<1>> <<2>><<3>> <<4>>", Util.ColorString("["..GetTimeString(), "gray"), title, Util.ColorString("]", "gray"), msg) )  
 end
 
 
@@ -85,6 +72,7 @@ end
 local function OnPlayerActivated() 
     local newZone = GetZoneId(GetUnitZoneIndex("player")) 
     if newZone ~= LFI.zone then 
+        LFI.debugMsg( {"Zone", "green"} , "new zone "..tostring(newZone) )
         LFI.positionHandler:ClearRegistry() 
         CM:FireCallbacks("LFI_ZoneChange", newZone)
     LFI.zone = newZone 
@@ -160,10 +148,7 @@ local function Initialize()
 
     LFI.unitHandler:CreateMasterControls()
 
-
     LFI.initialized = true 
-    
-    CM:RegisterCallback("LFI_ZoneChange", function(newZone) d("LFI Zone Activation: "..tostring(newZone) ) end )
 
     EM:RegisterForEvent(LFI.name, EVENT_PLAYER_ACTIVATED, OnInitialPlayerActivated) 
 
