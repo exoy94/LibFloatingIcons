@@ -97,9 +97,11 @@ function LibFloatingIcons:RegisterHandler( handlerName )
         return 
     end
 
+    LFI.debugMsg({"Interface", "green"}, zo_strformat("new handler registered: <<1>>", LFI.util.ColorString() ))
+
     local Handler = {}
     setmetatable( Handler, {__index = Interface } )
-    Handler.name = handerName 
+    Handler.name = handlerName 
 
     --- object data defaults 
     Handler.objectDataDefaults = { position = {}, unit = {} }
@@ -110,14 +112,48 @@ function LibFloatingIcons:RegisterHandler( handlerName )
 
     Handler.iconTemplates = {}
 
+    LFI.interfaceVault[handlerName] = Handler
+
+    return Handler
 end 
 
 
 
 
+--[[ ------------------- ]]
+--[[ -- Custom Events -- ]]
+--[[ ------------------- ]]
+
+
+local function CustomEventHandler( action, name, callback ) 
+    if action then 
+        LFI.CM:RegisterCallback(name, callback)
+    else 
+        LFI.CM:UnregisterCallback(name, callback)
+    end
+end
+
+
+function LibFloatingIcons:RegisterForZoneEnter( callback ) 
+    CustomEventHandler(true, "LFI_ZoneEnter", callback)
+end
+
+
+function LibFloatingIcons:RegisterForZoneExit( callback ) 
+    CustomEventHandler(true, "LFI_ZoneExit", callback)
+end
+
+
+function LibFloatingIcons:UnregisterForZoneEnter( callback ) 
+    CustomEventHandler(false, "LFI_ZoneEnter", callback)
+end
+
+
+function LibFloatingIcons:UnregisterForZoneExit( callback ) 
+    CustomEventHandler(false, "LFI_ZoneExit", callback)
+end
 
 
 
 
---- RegisterForZoneActivation() 
---- UnregisterForZoneActivation() 
+
