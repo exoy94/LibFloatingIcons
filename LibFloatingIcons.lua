@@ -5,7 +5,7 @@ local LFI = LibFloatingIcons.internal
 
 local EM = GetEventManager() 
 local WM = GetWindowManager()
-local CM = ZO_CallbackObject:New()
+
  
 LFI.name = "LibFloatingIcons"
 LFI.version = "0.3"
@@ -58,6 +58,7 @@ function Util.ColorString(str, colorName)
 --[[ ----------- ]]
 
 function LFI.debugMsg(titleInfo, msg) 
+    if not LFI.store.debug then return end 
     local titleStr = Util.IsTable(titleInfo) and " - "..titleInfo[1] or ""
     local titleColor = Util.IsTable(titleInfo) and titleInfo[2] or "cyan"
     local title = Util.ColorString( "LFI"..titleStr, titleColor)
@@ -72,27 +73,24 @@ end
 local function OnPlayerActivated() 
     local newZone = GetZoneId(GetUnitZoneIndex("player")) 
     if newZone ~= LFI.zone then 
-        LFI.debugMsg( {"Zone", "green"} , "new zone "..tostring(newZone) )
         LFI.positionHandler:ClearRegistry() 
-        CM:FireCallbacks("LFI_ZoneChange", newZone)
+        LFI.debugMsg( {"Callback", "green"} , zo_strformat( "<<1>> zone <<2>> (<<3>>)", Util.ColorString("Exit", "white"), Util.ColorString(GetZoneNameById(LFI.zone), "orange"), LFI.zone ) ) 
+        LFI.CM:FireCallbacks("LFI_ZoneExit", LFI.zone) 
+        LFI.debugMsg( {"Callback", "green"} , zo_strformat( "<<1>> zone <<2>> (<<3>>)", Util.ColorString("Enter", "white"), Util.ColorString(GetZoneNameById(newZone), "orange"), newZone ) ) 
+        LFI.CM:FireCallbacks("LFI_ZoneEnter", newZone)
     LFI.zone = newZone 
     end 
 end
 
 
 local function OnInitialPlayerActivated() 
-
     EM:UnregisterForEvent( LFI.name, EVENT_PLAYER_ACTIVATED)
-    
     LFI.zone = GetZoneId(GetUnitZoneIndex("player"))
-    CM:FireCallbacks("LFI_ZoneChange", LFI.zone)
-    --LFI.positionObjectHandler:AddZoneToRenderList( LFI.zone )   
-    --LFI.playerActivated = true 
-    
-    LFI.OnUpdate() -- prevents objs to shortly pop-up on cneter screen after reload
+    LFI.debugMsg( {"Callback", "green"} , zo_strformat( "<<1>> zone <<2>> (<<3>>)", Util.ColorString("Enter", "white"), Util.ColorString(GetZoneNameById(LFI.zone), "orange"), LFI.zone ) ) 
+    LFI.CM:FireCallbacks("LFI_ZoneEnter", LFI.zone)
+    LFI.OnUpdate()
     EM:RegisterForUpdate( LFI.name, 10, LFI.OnUpdate )
     EM:RegisterForEvent( LFI.name, EVENT_PLAYER_ACTIVATED, OnPlayerActivated)
-
 end
 
 
@@ -102,7 +100,12 @@ end
 
 local function Initialize() 
 
+    LFI.CM = ZO_CallbackObject:New()
+
     --- saved variables 
+
+    LFI.store = {}
+    LFI.store.debug = true
 
     --- menu 
 
@@ -162,6 +165,7 @@ local function OnAddonLoaded(_, addonName)
 end
 
 EM:RegisterForEvent(LFI.name, EVENT_ADD_ON_LOADED, OnAddonLoaded)
+
 
 
 
