@@ -25,7 +25,7 @@ function ObjectClass:New( obj )
 
     --- create basic controls 
     local ctrlName = zo_strformat("LFI_<<1>>Obj<<2>>", self.type, self.id)
-    local rootCtrl = WM:CreateControl( ctrlName.."_rootCtrl" )
+    local rootCtrl = WM:CreateControl( ctrlName.."_rootCtrl", LFI.window, CT_CONTROl)
     rootCtrl:ClearAnchors()
     rootCtrl:SetAnchor( BOTTOM, LFI.window, CENTER, 0, 0)
     rootCtrl:SetHidden(true)

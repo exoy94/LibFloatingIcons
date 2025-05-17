@@ -32,7 +32,7 @@ end
  
 
 
-local libraryPositionObjectDataDefault = { 
+local libraryPositionObjectDefault = { 
     x = 0, 
     y = 0, 
     z = 0, 
@@ -42,7 +42,7 @@ local libraryPositionObjectDataDefault = {
 
 
 
-local libraryUnitObjectDataDefault = {
+local libraryUnitObjectDefault = {
     enabled = false, 
     hidden = true,    
 }
@@ -53,12 +53,12 @@ local libraryUnitObjectDataDefault = {
 --[[ Object Handling ]]
 
 local function AddObject( self, objType, name, objData, iconSettings ) 
-    -- self = respective Interface 
+    -- self = Interface 
     --- ToDo variable check 
     -- unique name 
     -- correct variable types 
 
-    local Handler = self:GetHandler()
+    local Handler = self:GetHandler(objType)
     -- provides the interfac to use individual default values 
     local obj = Handler:AddObject( self, name, objData, iconSettings)
 
@@ -80,7 +80,9 @@ function Interface:AddUnitObject( ...  )
     return AddObject( self, "position", ...)
 end
 
-
+function Interface:GetHandler(objType) 
+    return LFI[objType.."Handler"]
+end
 
 
 --[[ Exposed Handler Definition ]]
@@ -104,9 +106,9 @@ function LibFloatingIcons:RegisterHandler( handlerName )
     Handler.name = handlerName 
 
     --- object data defaults 
-    Handler.objectDataDefaults = { position = {}, unit = {} }
-    setmetatable( Handler.objectDataDefaults.position, {__index = libraryPositionObjectDataDefault} )
-    setmetatable( Handler.objectDataDefaults.unit, {__index = libraryUnitObjectDataDefault} )
+    Handler.objectDefaults = { position = {}, unit = {} }
+    setmetatable( Handler.objectDefaults.position, {__index = libraryPositionObjectDefault} )
+    setmetatable( Handler.objectDefaults.unit, {__index = libraryUnitObjectDefault} )
 
     Handler.objectVault = { position= {}, unit = {} }
 
