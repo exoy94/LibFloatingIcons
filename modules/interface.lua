@@ -162,23 +162,6 @@ end
 --[[ -- Functions -- ]]
 --[[ --------------- ]]
 
-
-function LibFloatingIcons:PrintUnitPosition( unitTag ) 
-    unitTag = unitTag or "player" 
-    local CStr = LFI.util.ColorString
-
-    if not DoesUnitExist(unitTag) then 
-        d( zo_strformat("[<<1>>] position print: invalid unit (<<2>>)", CStr("LFI", "cyan"), CStr(unitTag,"white")) )
-        return 
-    end 
-
-    local zone, wX, wY, wZ = GetUnitRawWorldPosition( unitTag )
-
-    local str = zo_strformat("[<<1>>] Position of <<2>> (<<3>>) in <<4>> (<<5>>)", CStr("LFI", "cyan"), CStr(GetUnitName(unitTag), "orange"), CStr(unitTag, "white"), CStr(GetZoneNameById(LFI.zone),"orange"), CStr(LFI.zone, "white") )
-    d( zo_strformat("<<1>> at {x,y,z} = {<<2>>, <<3>>, <<4>>}", str, CStr(tostring(wX), "white"), CStr(tostring(wY), "white"), CStr(tostring(wZ), "white")) )
-end
-
-
 function LibFloatingIcons:GetCurrentZoneId() 
     return LFI.zone 
 end

@@ -18,10 +18,10 @@ local function PrintBool( var, colorCoded, negatory)
   end
 end
 
-
 local function Divider() 
   d( Util.ColorString("--------------------------------------------------", "gray") )
 end
+
 
 --[[ ------------------- ]]
 --[[ -- Chat Command  -- ]]
@@ -30,9 +30,9 @@ end
 local cmdList = {
     ["pool"] = "objectPool data summary",
     ["handler"] = "handler list or specific handler data"
+    ["position"] = "prints position of specified unitTag (default = player)"
   }
   
-
 SLASH_COMMANDS["/lfi"] = function( input ) 
   local LFI = LibFloatingIcons.internal
   local Util = LFI.util
@@ -73,16 +73,50 @@ SLASH_COMMANDS["/lfi"] = function( input )
         end
         d( zo_strformat("<<1>>: positionObj: <<2>>; unitObj: <<3>>", CStr(name, "orange"), CStr(tostring(numPosObj), "white"), CStr(tostring(numUnitObj), "white") ) )
       end
-    else 
+    else  
+
+      --- debug for a specific handler (interface) 
       if LFI.interfaceVault[ param[1] ] then 
         d( zo_strformat("[<<1>>] handler <<2>> overview:", CStr("LibFloatingIcons", "cyan"), CStr(param[1], "orange") ) ) 
-        -- objDefaults (position, unit) 
-        -- iconTemplates  
-        -- list of objects 
-        Divider()
+        local Interface = LFI.interfaceVault[ param[1] ]
+        
+        --- detailed debug for specific aspects of the handler
+        if param[2] then 
+          --- list of all icon templates
+          if param[2] == "templates" then
+            d( zo_strformat("[<<1>>] handler <<2>> - <<3>>", CStr("LFI", "cyan"), CStr(param[1], "orange"), CStr("icon templates", "white") ) ) 
+            for name, template in pairs(Interface.iconTemplates) do 
+              d( zo_strformat("-- (Template) <<1>> --", CStr(name, "orange") ) )
+              local meta = getmetatable(template) 
+              for key, _ in pairs(meta) do 
+                d( zo_strformat("<<1>>: <<2>>", CStr(key, "white"), template[key] ) )
+              end
+            end
+          --- information about the position objects
+          elseif param[2] == "position"  then 
+            -- default settings 
+            
+          elseif param[2] == "unit" then 
+          end
+        
+        --- general information about the handler
+        else 
+
+        end
       else 
         d( zo_strformat("[<<1>>] handler <<2>> does not exist", CStr("LibFloatingIcons", "cyan"), CStr(param[1], "orange") ) ) 
       end
+    end
+
+  --- prints position of specified unitTag (default = player)
+  elseif cmd == "position"
+    local unit = param[1] or "player"
+    if not DoesUnitExist(unit) then 
+      d( zo_strformat("[<<1>>] position print: invalid unit (<<2>>)", CStr("LFI", "cyan"), CStr(unit,"white")) )
+    else 
+      local zone, wX, wY, wZ = GetUnitRawWorldPosition( unit )
+      local str = zo_strformat("[<<1>>] Position of <<2>> (<<3>>) in <<4>> (<<5>>)", CStr("LFI", "cyan"), CStr(GetUnitName(unitTag), "orange"), CStr(unitTag, "white"), CStr(GetZoneNameById(LFI.zone),"orange"), CStr(LFI.zone, "white") )
+      d( zo_strformat("<<1>> at {x,y,z} = {<<2>>, <<3>>, <<4>>}", str, CStr(tostring(wX), "white"), CStr(tostring(wY), "white"), CStr(tostring(wZ), "white")) )
     end
   end
 end
