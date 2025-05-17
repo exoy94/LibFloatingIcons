@@ -108,8 +108,33 @@ SLASH_COMMANDS["/lfi"] = function( input )
       end
     end
 
+  --- prints information about the currently rendered (and buffered) objects
+  elseif cmd == "render" then
+    d( zo_strformat("[<<1>>] <<2>>", CStr("LibFloatingIcons", "cyan"), "render overview") ) 
+    
+    -- renderlist of position objects
+    d( zo_strformat("-- <<1>> --", CStr("Renderlist (Position)", "orange") ) )
+    for _, obj in pairs( LFI.positionHandler.render ) do 
+      d( zo_strformat("<<1>>: {x,y,z} = {<<2>>, <<3>>, <<4>>}; hidden: <<5>>", CStr(obj.name, "orange"), CStr(obj.data.x, "white"), CStr(obj.data.y, "white"), CStr(obj.data.z, "white"), PrintBool( obj.rootCtrl:IsHidden(), true, true) ) )
+    end
+
+    -- bufferlist of position objects
+    d( zo_strformat("-- <<1>> --", CStr("Bufferlist (Position)", "orange") ) )
+    for _, obj in pairs( LFI.positionHandler.buffer ) do 
+      d( zo_strformat("<<1>>: {x,y,z} = {<<2>>, <<3>>, <<4>>}; hidden: <<5>>", CStr(obj.name, "orange"), CStr(obj.data.x, "white"), CStr(obj.data.y, "white"), CStr(obj.data.z, "white"), PrintBool( obj.rootCtrl:IsHidden(), true, true) ) )
+    end
+
+    -- of unit master objects 
+    d( zo_strformat("-- <<1>> --", CStr("Renderlist (Unit - MasterCtrl)", "orange") ) )
+    local str = ""
+    for unit, in pairs( LFI.unitHandler.render ) do 
+      str = zo_strformat("<<1>>, <<2>>", str, unit )
+    end
+
+
+
   --- prints position of specified unitTag (default = player)
-  elseif cmd == "position"
+  elseif cmd == "position" then
     local unit = param[1] or "player"
     if not DoesUnitExist(unit) then 
       d( zo_strformat("[<<1>>] position print: invalid unit (<<2>>)", CStr("LFI", "cyan"), CStr(unit,"white")) )
