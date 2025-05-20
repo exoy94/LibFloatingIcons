@@ -26,7 +26,8 @@ end
 function HandlerClass:AddObject( Interface, name, objData, iconSettings )
     
     local obj = LFI.objectPool:RetrieveObject( self.type )
-    obj:Initialize( Interface, name, objData, iconSettings  ) 
+    obj:Initialize( Interface, name, objData, iconSettings ) 
+    return obj
 
 end
 

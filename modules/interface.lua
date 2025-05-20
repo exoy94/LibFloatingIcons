@@ -11,9 +11,9 @@ local Interface = LFI.interface
 
 local libraryIconTemplateDefault = {
     texture = "/esoui/art/icons/achievement_u30_groupboss6.dds", 
-    width = 0, 
-    height = 0, 
-    hidden = true,
+    width = 50, 
+    height = 50, 
+    hidden = false,
     color = {1,1,1}, 
     offsetX = 0,
     offsetY = 0,
@@ -36,6 +36,7 @@ local libraryPositionObjectDefault = {
     x = 0, 
     y = 0, 
     z = 0, 
+    offset = 0,
     enabled = false, 
     hidden = true, 
 }
@@ -53,20 +54,23 @@ local libraryUnitObjectDefault = {
 --[[ Object Handling ]]
 
 local function AddObject( self, objType, name, objData, iconSettings ) 
-    -- self = Interface 
+    ---@param self = Interface 
+
     --- ToDo variable check 
+    if self.objectVault[objType][name] then return nil, 1 end --dont allow for duplicate names 
+    
     -- unique name 
     -- correct variable types 
 
     local Handler = self:GetHandler(objType)
+
     -- provides the interfac to use individual default values 
     local obj = Handler:AddObject( self, name, objData, iconSettings)
 
     --- ToDo initial enabled/buffer/render decision 
+    self.objectVault[objType][name] = obj   
 
-    self.objectVault[objType][name] = obj
-
-    return obj
+    return obj, 0
 end
 
 
@@ -77,7 +81,7 @@ function Interface:AddPositionObject( ...  )
 end
 
 function Interface:AddUnitObject( ...  )
-    return AddObject( self, "position", ...)
+    return AddObject( self, "unit", ...)
 end
 
 function Interface:GetHandler(objType) 

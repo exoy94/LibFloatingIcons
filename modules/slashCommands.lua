@@ -29,8 +29,9 @@ end
 
 local cmdList = {
     ["pool"] = "objectPool data summary",
-    ["handler"] = "handler list or specific handler data"
-    ["position"] = "prints position of specified unitTag (default = player)"
+    ["handler"] = "handler list or specific handler data",
+    ["render"] = "prints information about the currently rendered (and buffered) objects",
+    ["position"] = "prints position of specified unitTag (default = player)",
   }
   
 SLASH_COMMANDS["/lfi"] = function( input ) 
@@ -95,8 +96,15 @@ SLASH_COMMANDS["/lfi"] = function( input )
           --- information about the position objects
           elseif param[2] == "position"  then 
             -- default settings 
+            d("position vault")
+            local vault = Interface.objectVault.position 
+            d(vault)
             
           elseif param[2] == "unit" then 
+            d("unit vault")
+            local vault = Interface.objectVault.unit 
+            d(vault)
+
           end
         
         --- general information about the handler
@@ -127,12 +135,11 @@ SLASH_COMMANDS["/lfi"] = function( input )
     -- of unit master objects 
     d( zo_strformat("-- <<1>> --", CStr("Renderlist (Unit - MasterCtrl)", "orange") ) )
     local str = ""
-    for unit, in pairs( LFI.unitHandler.render ) do 
+    for unit,_ in pairs( LFI.unitHandler.render ) do 
       str = zo_strformat("<<1>>, <<2>>", str, unit )
     end
 
-
-
+  
   --- prints position of specified unitTag (default = player)
   elseif cmd == "position" then
     local unit = param[1] or "player"
@@ -140,7 +147,7 @@ SLASH_COMMANDS["/lfi"] = function( input )
       d( zo_strformat("[<<1>>] position print: invalid unit (<<2>>)", CStr("LFI", "cyan"), CStr(unit,"white")) )
     else 
       local zone, wX, wY, wZ = GetUnitRawWorldPosition( unit )
-      local str = zo_strformat("[<<1>>] Position of <<2>> (<<3>>) in <<4>> (<<5>>)", CStr("LFI", "cyan"), CStr(GetUnitName(unitTag), "orange"), CStr(unitTag, "white"), CStr(GetZoneNameById(LFI.zone),"orange"), CStr(LFI.zone, "white") )
+      local str = zo_strformat("[<<1>>] Position of <<2>> (<<3>>) in <<4>> (<<5>>)", CStr("LFI", "cyan"), CStr(GetUnitName(unit), "orange"), CStr(unit, "white"), CStr(GetZoneNameById(LFI.zone),"orange"), CStr(LFI.zone, "white") )
       d( zo_strformat("<<1>> at {x,y,z} = {<<2>>, <<3>>, <<4>>}", str, CStr(tostring(wX), "white"), CStr(tostring(wY), "white"), CStr(tostring(wZ), "white")) )
     end
   end

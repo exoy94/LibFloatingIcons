@@ -21,10 +21,10 @@ function ObjectClass:New( obj )
     --- early out when defining the subclasses 
     if not LFI.initialized then return obj end
 
-    obj.id = LFI.objectPool:GetNextObjectId( obj.type )
+    obj.id = LFI.objectPool:GetNextObjectId( obj.objType )
 
     --- create basic controls 
-    local ctrlName = zo_strformat("LFI_<<1>>Obj<<2>>", self.type, self.id)
+    local ctrlName = zo_strformat("LFI_<<1>>Obj<<2>>", obj.objType, obj.id)
     local rootCtrl = WM:CreateControl( ctrlName.."_rootCtrl", LFI.window, CT_CONTROl)
     rootCtrl:ClearAnchors()
     rootCtrl:SetAnchor( BOTTOM, LFI.window, CENTER, 0, 0)
@@ -57,12 +57,19 @@ function ObjectClass:Initialize( Interface, name, objData, iconOpt )
     local iconTemplate = Interface:GetIconTemplate( iconOpt.template ) 
     setmetatable( iconOpt, {__index = iconTemplate} )
 
+    local ctrl = self.rootCtrl
+    ctrl:SetHidden( self.data.hidden )
+
     local icon = self.iconCtrl
     icon:SetAnchor( CENTER, self.rootCtrl, CENTER, iconOpt.offsetX, iconOpt.offsetY )
     icon:SetTexture( iconOpt.texture )
     icon:SetDimensions( iconOpt.width, iconOpt.height )
     icon:SetColor( unpack(iconOpt.color) )  
     icon:SetHidden( iconOpt.hidden ) 
+
+    if self.data.enabled then 
+        self:Enable()
+    end
 
 end
 
@@ -110,8 +117,7 @@ function ObjectClass:Enable()
     self.data.enabled = true 
     
     local Handler = self:GetHandler() 
-    Handler:AddToBuffer( obj )
-
+    Handler:AddToBuffer( self )
 end
 
 

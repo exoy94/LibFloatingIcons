@@ -8,8 +8,5 @@ LibFloatingIcons.classes.positionObject = {}
 
 local PositionObject = LibFloatingIcons.classes.positionObject
 
-PositionObject.type = "position"
+PositionObject.objType = "position"
 
-function PositionObject:TestFunc() 
-    d("---hello world" )
-end

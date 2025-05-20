@@ -25,7 +25,7 @@ end
 
 function PositionHandler:AddToBuffer( obj ) 
     --- here include logic for to far away, subzone, mapindex check etc 
-
+    
     self:AddToRenderList( obj.name, obj )
      
 end
