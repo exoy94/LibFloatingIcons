@@ -12,10 +12,7 @@ PositionHandler.type = "position"
 
 function PositionHandler:ClearRegistry()
     for id, obj in pairs( self.registry ) do 
-        if self.render[id] then 
-            self:RemoveFromRenderList( obj )  
-        end
-        --- put custom ctrls in pool  
+        obj:Disable() 
         LFI.objectPool:StoreObject( obj )  
         --- remove obj from addonHandler
     end
@@ -23,12 +20,10 @@ function PositionHandler:ClearRegistry()
 end
 
 
-function PositionHandler:AddToBuffer( obj ) 
-    --- here include logic for to far away, subzone, mapindex check etc 
-    
-    self:AddToRenderList( obj.name, obj )
-     
-end
+
+
+
+
 
 
 

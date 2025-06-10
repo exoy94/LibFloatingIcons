@@ -15,12 +15,6 @@ UnitHandler.type = "unit"
 --- function ZoneChange ()  (fct: ClearRenderList/ ClearRegistry ) 
 
 
-function UnitHandler:AddToBuffer() 
-    --- determine if the master control is already in render, if not add it, if it is, add it to a list 
-
-end
-
-
 function UnitHandler:CreateMasterControls() 
     local name = "LFI_UnitMasterCtrl_"
 
@@ -50,3 +44,6 @@ function UnitHandler:CreateMasterControls()
 
     self.masterCtrls = masterCtrls
 end
+
+
+

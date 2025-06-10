@@ -32,18 +32,33 @@ function HandlerClass:AddObject( Interface, name, objData, iconSettings )
 end
 
 
+function HandlerClass:AddToBuffer(id, obj) 
+    self.buffer[id] = obj 
+    self:AddToRenderList(id, obj) 
+end
+
+
+function HandlerClass:RemoveFromBuffer( id ) 
+    self:RemoveFromRenderList( id ) 
+end
+
 
 function HandlerClass:AddToRenderList( id, obj ) 
+    -- obj: unit = masterCtrl; position = obj
     self.render[id] = obj 
+    obj:SetHidden( false ) 
 end
 
 
-
-function HandlerClass:RemoveFromRenderList( key ) 
-    local obj = self.render[id] 
-    --- hide icon 
+function HandlerClass:RemoveFromRenderList( id ) 
+    -- unit: id = unitTag
+    -- position: id = obj.id 
+    if self.render[id] then 
+        self.render[id]:SetHidden(true) 
+    end 
     self.render[id] = nil 
 end
+
 
 
 

@@ -38,14 +38,15 @@ local libraryPositionObjectDefault = {
     z = 0, 
     offset = 0,
     enabled = false, 
-    hidden = true, 
 }
 
 
 
 local libraryUnitObjectDefault = {
+    type = "tag", -- tag, playerName, companionName, petName, 
+    --- how to deal with trader? 
+    id = "player",  -- name or tag
     enabled = false, 
-    hidden = true,    
 }
 
 

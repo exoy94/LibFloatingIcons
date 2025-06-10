@@ -46,7 +46,7 @@ end
 
 function ObjectClass:Initialize( Interface, name, objData, iconOpt ) 
 
-    self.name = name 
+    self.name = name  
 
     --- apply default settings 
     self.data = objData or {}
@@ -56,9 +56,6 @@ function ObjectClass:Initialize( Interface, name, objData, iconOpt )
     iconOpt = iconOpt or {}
     local iconTemplate = Interface:GetIconTemplate( iconOpt.template ) 
     setmetatable( iconOpt, {__index = iconTemplate} )
-
-    local ctrl = self.rootCtrl
-    ctrl:SetHidden( self.data.hidden )
 
     local icon = self.iconCtrl
     icon:SetAnchor( CENTER, self.rootCtrl, CENTER, iconOpt.offsetX, iconOpt.offsetY )
@@ -113,15 +110,8 @@ function ObjectClass:GetHandler()
 end
 
 
-function ObjectClass:Enable() 
-    self.data.enabled = true 
-    
-    local Handler = self:GetHandler() 
-    Handler:AddToBuffer( self )
-end
 
 
-function ObjectClass:Disable() 
 
-end 
+
 
